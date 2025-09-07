@@ -1,0 +1,333 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Search, Filter, Users, ChevronRight, RefreshCw, User, DollarSign, Calendar, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+interface Persona {
+  lead_id: string;
+  persona_summary: string;
+  personal_info: {
+    name: string;
+    age: number;
+    gender: string;
+    occupation: string;
+  };
+  demographic_info: {
+    location: string;
+    education: string;
+    marital_status: string;
+  };
+  financial_info: {
+    annual_income: number;
+    savings: number;
+    investments: string;
+  };
+  insurance_history: {
+    current_policies: string[];
+    claims_history: string[];
+  };
+  product_interest?: string;
+  age_group?: string;
+  photo_url?: string;
+}
+
+export default function PersonasPage() {
+  const navigate = useNavigate();
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [filteredPersonas, setFilteredPersonas] = useState<Persona[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    ageGroup: '',
+    incomeRange: '',
+    productInterest: '',
+  });
+
+  const itemsPerPage = 30;
+
+  useEffect(() => {
+    fetchPersonas();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [searchTerm, filters, personas]);
+
+  const fetchPersonas = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:8000/get_synthetic_personas');
+      setPersonas(response.data);
+      setFilteredPersonas(response.data);
+    } catch (err) {
+      console.error('Error fetching personas:', err);
+      
+      const mockData: Persona[] = Array.from({ length: 50 }, (_, i) => ({
+        lead_id: `LEAD-${1000 + i}`,
+        persona_summary: `Professional ${['working', 'retired', 'self-employed'][i % 3]} individual interested in ${['life insurance', 'health insurance', 'investment plans'][i % 3]}`,
+        personal_info: {
+          name: `Person ${i + 1}`,
+          age: 25 + (i % 40),
+          gender: i % 2 === 0 ? 'Male' : 'Female',
+          occupation: ['Engineer', 'Doctor', 'Business Owner', 'Teacher', 'Consultant'][i % 5],
+        },
+        demographic_info: {
+          location: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'][i % 5],
+          education: ['Bachelor', 'Master', 'PhD', 'High School'][i % 4],
+          marital_status: ['Single', 'Married', 'Divorced'][i % 3],
+        },
+        financial_info: {
+          annual_income: 50000 + (i * 2000),
+          savings: 10000 + (i * 1000),
+          investments: ['Stocks', 'Bonds', 'Real Estate', 'Mutual Funds'][i % 4],
+        },
+        insurance_history: {
+          current_policies: ['Term Life', 'Health', 'Auto'][i % 3] ? [['Term Life', 'Health', 'Auto'][i % 3]] : [],
+          claims_history: i % 5 === 0 ? ['Minor health claim - 2022'] : [],
+        },
+        product_interest: ['Life Insurance', 'Health Insurance', 'Investment Plans'][i % 3],
+        age_group: i < 20 ? '25-35' : i < 35 ? '36-50' : '51+',
+        photo_url: `https://ui-avatars.com/api/?name=Person+${i + 1}&background=random`,
+      }));
+      
+      setPersonas(mockData);
+      setFilteredPersonas(mockData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...personas];
+
+    if (searchTerm) {
+      filtered = filtered.filter(persona =>
+        persona.personal_info?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        persona.lead_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        persona.persona_summary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        persona.personal_info?.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (filters.ageGroup) {
+      filtered = filtered.filter(persona => persona.age_group === filters.ageGroup);
+    }
+
+    if (filters.incomeRange) {
+      filtered = filtered.filter(persona => {
+        const income = persona.financial_info?.annual_income || 0;
+        switch (filters.incomeRange) {
+          case '<50k': return income < 50000;
+          case '50k-100k': return income >= 50000 && income < 100000;
+          case '100k-200k': return income >= 100000 && income < 200000;
+          case '>200k': return income >= 200000;
+          default: return true;
+        }
+      });
+    }
+
+    if (filters.productInterest) {
+      filtered = filtered.filter(persona => 
+        persona.product_interest === filters.productInterest
+      );
+    }
+
+    setFilteredPersonas(filtered);
+    setCurrentPage(1);
+  };
+
+  const handlePersonaClick = (persona: Persona) => {
+    navigate(`/personas/${persona.lead_id}`, { state: { persona } });
+  };
+
+  const paginatedPersonas = filteredPersonas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredPersonas.length / itemsPerPage);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+            Synthetic Personas
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Manage and explore digital twin personas
+          </p>
+        </div>
+        <button
+          onClick={fetchPersonas}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+        >
+          <RefreshCw size={18} />
+          Refresh
+        </button>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+          <input
+            type="text"
+            placeholder="Search by name, ID, occupation..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-muted/50 rounded-lg outline-none focus:bg-muted focus:ring-2 focus:ring-accent"
+          />
+        </div>
+        <button
+          onClick={() => setFilterOpen(!filterOpen)}
+          className="px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors flex items-center gap-2"
+        >
+          <Filter size={18} />
+          Filters
+        </button>
+      </div>
+
+      {filterOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="glass border border-border rounded-lg p-4"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Age Group</label>
+              <select
+                value={filters.ageGroup}
+                onChange={(e) => setFilters({ ...filters, ageGroup: e.target.value })}
+                className="w-full mt-1 px-3 py-2 bg-muted rounded-lg outline-none focus:ring-2 focus:ring-accent"
+              >
+                <option value="">All Ages</option>
+                <option value="25-35">25-35</option>
+                <option value="36-50">36-50</option>
+                <option value="51+">51+</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Income Range</label>
+              <select
+                value={filters.incomeRange}
+                onChange={(e) => setFilters({ ...filters, incomeRange: e.target.value })}
+                className="w-full mt-1 px-3 py-2 bg-muted rounded-lg outline-none focus:ring-2 focus:ring-accent"
+              >
+                <option value="">All Income</option>
+                <option value="<50k">Under $50k</option>
+                <option value="50k-100k">$50k - $100k</option>
+                <option value="100k-200k">$100k - $200k</option>
+                <option value=">200k">Over $200k</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Product Interest</label>
+              <select
+                value={filters.productInterest}
+                onChange={(e) => setFilters({ ...filters, productInterest: e.target.value })}
+                className="w-full mt-1 px-3 py-2 bg-muted rounded-lg outline-none focus:ring-2 focus:ring-accent"
+              >
+                <option value="">All Products</option>
+                <option value="Life Insurance">Life Insurance</option>
+                <option value="Health Insurance">Health Insurance</option>
+                <option value="Investment Plans">Investment Plans</option>
+              </select>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="text-sm text-muted-foreground">
+        Showing {paginatedPersonas.length} of {filteredPersonas.length} personas
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {paginatedPersonas.map((persona, index) => (
+          <motion.div
+            key={persona.lead_id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => handlePersonaClick(persona)}
+            className="glass border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group"
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-0.5">
+                <img 
+                  src={`http://localhost:8000/persona_image_thumbnail/${persona.lead_id}`} 
+                  alt={persona.personal_info?.name || 'Person'}
+                  className="w-full h-full rounded-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = persona.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.personal_info?.name || 'Person')}&background=random`;
+                  }}
+                />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">{persona.personal_info?.name || 'Unknown'}</h3>
+                <p className="text-xs text-muted-foreground">{persona.lead_id}</p>
+              </div>
+              <ChevronRight className="text-muted-foreground group-hover:text-blue-500 transition-colors" size={18} />
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+              {persona.persona_summary}
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-1">
+                <User size={12} className="text-muted-foreground" />
+                <span>{persona.personal_info?.age || 'N/A'} yrs, {persona.personal_info?.occupation || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <DollarSign size={12} className="text-muted-foreground" />
+                <span>${persona.financial_info?.annual_income ? (persona.financial_info.annual_income / 1000).toFixed(0) : '0'}k/yr</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Shield size={12} className="text-muted-foreground" />
+                <span>{persona.product_interest || 'Not specified'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar size={12} className="text-muted-foreground" />
+                <span>{persona.age_group || 'N/A'}</span>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded-lg bg-muted hover:bg-muted/80 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded-lg bg-muted hover:bg-muted/80 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
