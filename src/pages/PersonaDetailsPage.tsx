@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   ArrowLeft, User, MapPin, Briefcase, DollarSign, Calendar, 
   Shield, Heart, TrendingUp, MessageCircle, Phone, FileText,
-  ChevronDown, ChevronUp, X
+  ChevronDown, ChevronUp, X, Flame, Snowflake, Sun
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -48,6 +48,7 @@ interface Persona {
     risk_tolerance: string;
   };
   photo_url?: string;
+  lead_classification?: 'hot' | 'warm' | 'cold';
 }
 
 export default function PersonaDetailsPage() {
@@ -61,6 +62,7 @@ export default function PersonaDetailsPage() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{role: string, message: string}>>([]);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   useEffect(() => {
     if (!persona && leadId) {
@@ -114,7 +116,8 @@ export default function PersonaDetailsPage() {
           preferred_products: ['Whole Life Insurance', 'Investment-linked Plans', 'Child Education Plans'],
           risk_tolerance: 'Moderate - Balanced portfolio approach'
         },
-        photo_url: `https://ui-avatars.com/api/?name=John+Smith&background=random&size=200`
+        photo_url: `https://ui-avatars.com/api/?name=John+Smith&background=random&size=200`,
+        lead_classification: 'hot'
       };
       setPersona(mockPersona);
     } finally {
@@ -137,6 +140,7 @@ ${persona.persona_summary}
 - **Occupation:** ${persona.personal_info?.occupation || 'N/A'}
 ${persona.personal_info?.email ? `- **Email:** ${persona.personal_info.email}` : ''}
 ${persona.personal_info?.phone ? `- **Phone:** ${persona.personal_info.phone}` : ''}
+${persona.lead_classification ? `- **Lead Classification:** ${persona.lead_classification.charAt(0).toUpperCase() + persona.lead_classification.slice(1)}` : ''}
 
 ## Demographic Information
 - **Location:** ${persona.demographic_info?.location || 'N/A'}
@@ -184,23 +188,38 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
     }
   };
 
-  const handleSendMessage = () => {
-    if (chatMessage.trim()) {
-      setChatHistory([...chatHistory, { role: 'user', message: chatMessage }]);
+  const handleSendMessage = async () => {
+    if (chatMessage.trim() && !isSendingMessage) {
+      const userMessage = chatMessage;
+      setChatHistory(prev => [...prev, { role: 'user', message: userMessage }]);
+      setChatMessage('');
+      setIsSendingMessage(true);
       
-      setTimeout(() => {
-        const responses = [
+      try {
+        const response = await axios.post(
+          `http://localhost:8000/chat_with_synthetic_persona/${persona?.lead_id}`,
+          { question: userMessage },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+        
+        const assistantResponse = response.data || "I understand. Could you tell me more about that?";
+        setChatHistory(prev => [...prev, { role: 'assistant', message: assistantResponse }]);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        
+        // Fallback responses if API fails
+        const fallbackResponses = [
           "That's interesting! Can you tell me more about the coverage?",
           "I'd like to understand the premium structure better.",
           "How does this compare to my current policy?",
           "What are the tax benefits?",
           "Can I customize the coverage based on my needs?"
         ];
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
         setChatHistory(prev => [...prev, { role: 'assistant', message: randomResponse }]);
-      }, 1000);
-      
-      setChatMessage('');
+      } finally {
+        setIsSendingMessage(false);
+      }
     }
   };
 
@@ -240,7 +259,23 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{persona.personal_info?.name || 'Unknown'}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">{persona.personal_info?.name || 'Unknown'}</h1>
+            {persona.lead_classification && (
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                persona.lead_classification === 'hot' 
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : persona.lead_classification === 'warm'
+                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+              }`}>
+                {persona.lead_classification === 'hot' && <Flame size={14} />}
+                {persona.lead_classification === 'warm' && <Sun size={14} />}
+                {persona.lead_classification === 'cold' && <Snowflake size={14} />}
+                {persona.lead_classification.charAt(0).toUpperCase() + persona.lead_classification.slice(1)} Lead
+              </span>
+            )}
+          </div>
           <span className="text-muted-foreground">{persona.lead_id}</span>
         </div>
       </div>
@@ -333,6 +368,23 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
                         )}
                         {persona.personal_info?.phone && (
                           <p><span className="text-muted-foreground">Phone:</span> {persona.personal_info.phone}</p>
+                        )}
+                        {persona.lead_classification && (
+                          <p className="flex items-center gap-2">
+                            <span className="text-muted-foreground">Lead Status:</span>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                              persona.lead_classification === 'hot' 
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                : persona.lead_classification === 'warm'
+                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            }`}>
+                              {persona.lead_classification === 'hot' && <Flame size={10} />}
+                              {persona.lead_classification === 'warm' && <Sun size={10} />}
+                              {persona.lead_classification === 'cold' && <Snowflake size={10} />}
+                              {persona.lead_classification.charAt(0).toUpperCase() + persona.lead_classification.slice(1)}
+                            </span>
+                          </p>
                         )}
                       </div>
                     </div>
@@ -504,6 +556,19 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
                 </div>
               </div>
             ))}
+            {isSendingMessage && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] px-3 py-2 rounded-lg text-sm bg-muted">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-pulse flex gap-1">
+                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="p-4 border-t border-border">
@@ -518,9 +583,10 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
               />
               <button
                 onClick={handleSendMessage}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                disabled={isSendingMessage || !chatMessage.trim()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send
+                {isSendingMessage ? '...' : 'Send'}
               </button>
             </div>
           </div>

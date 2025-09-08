@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Users, ChevronRight, RefreshCw, User, DollarSign, Calendar, Shield } from 'lucide-react';
+import { Search, Filter, Users, ChevronRight, RefreshCw, User, DollarSign, Calendar, Shield, Flame, Snowflake, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -30,6 +30,7 @@ interface Persona {
   product_interest?: string;
   age_group?: string;
   photo_url?: string;
+  lead_classification?: 'hot' | 'warm' | 'cold';
 }
 
 export default function PersonasPage() {
@@ -91,6 +92,7 @@ export default function PersonasPage() {
         product_interest: ['Life Insurance', 'Health Insurance', 'Investment Plans'][i % 3],
         age_group: i < 20 ? '25-35' : i < 35 ? '36-50' : '51+',
         photo_url: `https://ui-avatars.com/api/?name=Person+${i + 1}&background=random`,
+        lead_classification: (['hot', 'warm', 'cold'] as const)[i % 3],
       }));
       
       setPersonas(mockData);
@@ -275,7 +277,23 @@ export default function PersonasPage() {
                 />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">{persona.personal_info?.name || 'Unknown'}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold">{persona.personal_info?.name || 'Unknown'}</h3>
+                  {persona.lead_classification && (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      persona.lead_classification === 'hot' 
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        : persona.lead_classification === 'warm'
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    }`}>
+                      {persona.lead_classification === 'hot' && <Flame size={10} />}
+                      {persona.lead_classification === 'warm' && <Sun size={10} />}
+                      {persona.lead_classification === 'cold' && <Snowflake size={10} />}
+                      {persona.lead_classification}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">{persona.lead_id}</p>
               </div>
               <ChevronRight className="text-muted-foreground group-hover:text-blue-500 transition-colors" size={18} />
