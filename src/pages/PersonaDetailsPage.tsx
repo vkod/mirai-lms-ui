@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, User, MapPin, Briefcase, DollarSign, Calendar, 
+  ArrowLeft, User, MapPin, DollarSign, 
   Shield, Heart, TrendingUp, MessageCircle, Phone, FileText,
-  ChevronDown, ChevronUp, X, Flame, Snowflake, Sun
+  ChevronDown, X, Flame, Snowflake, Sun
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';

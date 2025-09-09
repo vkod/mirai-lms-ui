@@ -10,7 +10,6 @@ import {
   BookOpen,
   Video,
   FileText,
-  Award,
 } from 'lucide-react';
 
 const courses = [

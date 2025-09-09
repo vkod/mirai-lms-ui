@@ -14,8 +14,6 @@ import {
   Line,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,

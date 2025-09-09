@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Users, ChevronRight, RefreshCw, User, DollarSign, Calendar, Shield, Flame, Snowflake, Sun } from 'lucide-react';
+import { Search, Filter, ChevronRight, RefreshCw, User, DollarSign, Calendar, Shield, Flame, Snowflake, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 

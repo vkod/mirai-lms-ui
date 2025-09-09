@@ -10,8 +10,6 @@ import {
   Target,
 } from 'lucide-react';
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   BarChart,

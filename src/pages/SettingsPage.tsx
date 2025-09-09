@@ -7,8 +7,6 @@ import {
   Palette,
   Globe,
   Database,
-  Key,
-  Mail,
   Save,
   ToggleLeft,
   ToggleRight,
