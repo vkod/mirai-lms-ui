@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Bot, TrendingUp, Activity, DollarSign, ChevronRight, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { getApiEndpoint } from '../config/api.config';
 
 interface AgentMetrics {
   "Data processed"?: number;
@@ -41,7 +42,7 @@ export default function AgentsPage() {
   const fetchAgents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8000/agent_list');
+      const response = await axios.get(getApiEndpoint('/agent_list'));
       setAgents(response.data);
       setError(null);
     } catch (err) {

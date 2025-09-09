@@ -16,6 +16,7 @@ import {
   Filler
 } from 'chart.js';
 import axios from 'axios';
+import { getApiEndpoint } from '../config/api.config';
 
 ChartJS.register(
   CategoryScale,
@@ -54,7 +55,7 @@ export default function AgentDetailsPage() {
   const fetchAgentDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:8000/agent/${agentName}`);
+      const response = await axios.get(getApiEndpoint(`/agent/${agentName}`));
       setAgent(response.data);
     } catch (err) {
       console.error('Error fetching agent details:', err);

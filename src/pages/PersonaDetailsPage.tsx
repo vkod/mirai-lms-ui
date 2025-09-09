@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import { getApiEndpoint, API_ENDPOINTS } from '../config/api.config';
 
 interface Persona {
   lead_id: string;
@@ -73,7 +74,7 @@ export default function PersonaDetailsPage() {
   const fetchPersonaDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:8000/get_synthetic_persona/${leadId}`);
+      const response = await axios.get(getApiEndpoint(API_ENDPOINTS.GET_SYNTHETIC_PERSONA(leadId || '')));
       setPersona(response.data);
     } catch (err) {
       console.error('Error fetching persona details:', err);
@@ -197,7 +198,7 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
       
       try {
         const response = await axios.post(
-          `http://localhost:8000/chat_with_synthetic_persona/${persona?.lead_id}`,
+          getApiEndpoint(API_ENDPOINTS.CHAT_WITH_PERSONA(persona?.lead_id || '')),
           { question: userMessage },
           { headers: { 'Content-Type': 'application/json' } }
         );
@@ -288,7 +289,7 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
               onClick={() => setShowImageModal(true)}
             >
               <img 
-                src={`http://localhost:8000/persona_image_medium/${persona.lead_id}`} 
+                src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_MEDIUM(persona.lead_id))} 
                 alt={persona.personal_info?.name || 'Person'}
                 className="w-full h-full rounded-full object-cover"
                 onError={(e) => {
@@ -523,7 +524,7 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-0.5">
                 <img 
-                  src={`http://localhost:8000/persona_image_thumbnail/${persona.lead_id}`} 
+                  src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_THUMBNAIL(persona.lead_id))} 
                   alt={persona.personal_info?.name || 'Person'}
                   className="w-full h-full rounded-full object-cover"
                   onError={(e) => {
@@ -615,7 +616,7 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
               <X size={24} />
             </button>
             <img
-              src={`http://localhost:8000/persona_image/${persona.lead_id}`}
+              src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE(persona.lead_id))}
               alt={persona.personal_info?.name || 'Person'}
               className="w-full h-full object-contain rounded-lg"
               onError={(e) => {

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Search, Filter, ChevronRight, RefreshCw, User, DollarSign, Calendar, Shield, Flame, Snowflake, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { getApiEndpoint, API_ENDPOINTS } from '../config/api.config';
 
 interface Persona {
   lead_id: string;
@@ -60,7 +61,7 @@ export default function PersonasPage() {
   const fetchPersonas = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8000/get_synthetic_personas');
+      const response = await axios.get(getApiEndpoint(API_ENDPOINTS.GET_SYNTHETIC_PERSONAS));
       setPersonas(response.data);
       setFilteredPersonas(response.data);
     } catch (err) {
@@ -268,7 +269,7 @@ export default function PersonasPage() {
             <div className="flex items-start gap-3 mb-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-0.5">
                 <img 
-                  src={`http://localhost:8000/persona_image_thumbnail/${persona.lead_id}`} 
+                  src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_THUMBNAIL(persona.lead_id))} 
                   alt={persona.personal_info?.name || 'Person'}
                   className="w-full h-full rounded-full object-cover"
                   onError={(e) => {
