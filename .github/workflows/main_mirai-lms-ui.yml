@@ -61,5 +61,8 @@ jobs:
         with:
           app-name: 'mirai-lms-ui'
           slot-name: 'Production'
-          package: .
+          package: node-app
+      - name: List files for debug
+        run: ls -R
+
           
