@@ -1,0 +1,33 @@
+version: '3.8'
+
+# Production-specific configuration
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  mirai-lms-ui:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_IMAGE:-mirai-lms-ui}:${VERSION:-latest}
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-https://api.mirai-lms.com}
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

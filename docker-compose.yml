@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mirai-lms-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    image: mirai-lms-ui:latest
+    container_name: mirai-lms-ui
+    ports:
+      - "${PORT:-3000}:80"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    restart: unless-stopped
+    networks:
+      - mirai-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add backend service if needed
+  # mirai-backend:
+  #   image: mirai-backend:latest
+  #   container_name: mirai-backend
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - SECRET_KEY=${SECRET_KEY}
+  #   networks:
+  #     - mirai-network
+  #   restart: unless-stopped
+
+networks:
+  mirai-network:
+    driver: bridge
+
+# Optional: Add volumes for persistent data
+# volumes:
+#   mirai-data:
