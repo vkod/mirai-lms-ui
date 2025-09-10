@@ -13,13 +13,20 @@ interface AgentMetrics {
   [key: string]: number | undefined;
 }
 
+interface AgentInput {
+  name: string;
+  input_desc: string;
+  input_type: string;
+}
+
 interface Agent {
   name: string;
   version: string;
   goal: string;
-  inputs: string[];
+  inputs: AgentInput[];
   outputs: string[];
   metrics: AgentMetrics;
+  endpoint_for_testing: string;
 }
 
 const metricIcons: Record<string, any> = {
@@ -54,40 +61,54 @@ export default function AgentsPage() {
           name: "Digital Twin Agent",
           version: "1.0",
           goal: "Create an imaginary persona based on data provided and update the digital twin with data as much as possible.",
-          inputs: ["Website traffic data", "Existing Digital twin if any"],
+          inputs: [
+            { name: "website_traffic", input_desc: "Website traffic data", input_type: "textarea" },
+            { name: "existing_twin", input_desc: "Existing Digital twin if any", input_type: "textarea" }
+          ],
           outputs: ["Updated/New Digital twin"],
           metrics: {
             "Data processed": 100,
             "Digital twins created": 78,
             "Digital twins updated": 23,
             "Cost this month": 20000
-          }
+          },
+          endpoint_for_testing: "/test_digital_twin_agent"
         },
         {
           name: "Lead Scoring Agent",
           version: "2.1",
           goal: "Analyze and score leads based on multiple factors to prioritize sales efforts.",
-          inputs: ["Lead information", "Historical data", "Behavioral signals"],
+          inputs: [
+            { name: "lead_info", input_desc: "Lead information", input_type: "textarea" },
+            { name: "historical_data", input_desc: "Historical data", input_type: "textarea" },
+            { name: "behavioral_signals", input_desc: "Behavioral signals", input_type: "textarea" }
+          ],
           outputs: ["Lead score", "Recommendations"],
           metrics: {
             "Leads analyzed": 450,
             "High-value leads identified": 89,
             "Conversion rate": 23,
             "Cost this month": 15000
-          }
+          },
+          endpoint_for_testing: "/test_lead_scoring_agent"
         },
         {
           name: "Customer Engagement Agent",
           version: "1.5",
           goal: "Engage with customers through personalized communications and track interactions.",
-          inputs: ["Customer profile", "Interaction history", "Preferences"],
+          inputs: [
+            { name: "customer_profile", input_desc: "Customer profile", input_type: "textarea" },
+            { name: "interaction_history", input_desc: "Interaction history", input_type: "textarea" },
+            { name: "preferences", input_desc: "Preferences", input_type: "textarea" }
+          ],
           outputs: ["Engagement plan", "Communication logs"],
           metrics: {
             "Customers engaged": 320,
             "Messages sent": 1250,
             "Response rate": 67,
             "Cost this month": 8000
-          }
+          },
+          endpoint_for_testing: "/test_customer_engagement_agent"
         }
       ];
       setAgents(mockData);
@@ -177,7 +198,7 @@ export default function AgentsPage() {
                 <div className="flex flex-wrap gap-1 mt-1">
                   {agent.inputs.slice(0, 2).map((input, idx) => (
                     <span key={idx} className="text-xs px-2 py-1 bg-blue-500/10 text-blue-500 rounded">
-                      {input}
+                      {input.input_desc}
                     </span>
                   ))}
                   {agent.inputs.length > 2 && (

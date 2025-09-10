@@ -61,7 +61,7 @@ export default function DashboardLayout() {
               animate={{ opacity: 1, y: 0 }}
               className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent"
             >
-              Mirai Admin
+              Mirai LMS
             </motion.h1>
             <button
               onClick={() => setSidebarOpen(false)}

@@ -66,7 +66,7 @@ export default function LoginPage() {
               Welcome Back
             </h2>
             <p className="text-center text-muted-foreground mb-8">
-              Sign in to access Mirai Admin
+              Sign in to access Mirai LMS
             </p>
           </motion.div>
 

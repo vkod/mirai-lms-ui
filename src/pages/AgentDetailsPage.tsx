@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bot, ArrowLeft, Activity, TrendingUp, DollarSign, RefreshCw, Clock, CheckCircle } from 'lucide-react';
+import { Bot, ArrowLeft, Activity, TrendingUp, DollarSign, RefreshCw, Clock, CheckCircle, MessageCircle } from 'lucide-react';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -17,6 +17,7 @@ import {
 } from 'chart.js';
 import axios from 'axios';
 import { getApiEndpoint } from '../config/api.config';
+import AgentChat from '../components/AgentChat';
 
 ChartJS.register(
   CategoryScale,
@@ -30,13 +31,20 @@ ChartJS.register(
   Filler
 );
 
+interface AgentInput {
+  name: string;
+  input_desc: string;
+  input_type: string;
+}
+
 interface Agent {
   name: string;
   version: string;
   goal: string;
-  inputs: string[];
+  inputs: AgentInput[];
   outputs: string[];
   metrics: Record<string, number>;
+  endpoint_for_testing: string;
 }
 
 export default function AgentDetailsPage() {
@@ -45,6 +53,7 @@ export default function AgentDetailsPage() {
   const location = useLocation();
   const [agent, setAgent] = useState<Agent | null>(location.state?.agent || null);
   const [loading, setLoading] = useState(!agent);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     if (!agent && agentName) {
@@ -64,7 +73,12 @@ export default function AgentDetailsPage() {
         name: decodeURIComponent(agentName || ''),
         version: "1.0",
         goal: "Create an imaginary persona based on data provided and update the digital twin with data as much as possible.",
-        inputs: ["Website traffic data", "Existing Digital twin if any", "User behavior patterns", "Transaction history"],
+        inputs: [
+          { name: "website_traffic", input_desc: "Website traffic data", input_type: "textarea" },
+          { name: "existing_twin", input_desc: "Existing Digital twin if any", input_type: "textarea" },
+          { name: "user_behavior", input_desc: "User behavior patterns", input_type: "textarea" },
+          { name: "transaction_history", input_desc: "Transaction history", input_type: "textarea" }
+        ],
         outputs: ["Updated/New Digital twin", "Confidence scores", "Recommendations"],
         metrics: {
           "Data processed": 100,
@@ -73,7 +87,8 @@ export default function AgentDetailsPage() {
           "Cost this month": 20000,
           "Accuracy rate": 92,
           "Processing time": 1.2
-        }
+        },
+        endpoint_for_testing: "/test_digital_twin_agent"
       };
       setAgent(mockAgent);
     } finally {
@@ -217,6 +232,13 @@ export default function AgentDetailsPage() {
             </div>
           </div>
         </div>
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          <MessageCircle size={20} />
+          <span>Test Agent</span>
+        </button>
       </div>
 
       <div className="glass border border-border rounded-xl p-6">
@@ -231,7 +253,7 @@ export default function AgentDetailsPage() {
             {agent.inputs.map((input, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                <span className="text-sm">{input}</span>
+                <span className="text-sm">{input.input_desc}</span>
               </div>
             ))}
           </div>
@@ -288,6 +310,15 @@ export default function AgentDetailsPage() {
           </div>
         </div>
       </div>
+
+      <AgentChat
+        agentId={agent.name}
+        agentName={agent.name}
+        agentInputs={agent.inputs}
+        testEndpoint={agent.endpoint_for_testing}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </div>
   );
 }
