@@ -166,10 +166,10 @@ export default function PersonasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-            Synthetic Personas
+            Prospect Twins
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage and explore digital twin personas
+            Manage and explore digital twins of your insurance prospects
           </p>
         </div>
         <button
@@ -256,32 +256,36 @@ export default function PersonasPage() {
         Showing {paginatedPersonas.length} of {filteredPersonas.length} personas
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {paginatedPersonas.map((persona, index) => (
-          <motion.div
-            key={persona.lead_id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            onClick={() => handlePersonaClick(persona)}
-            className="glass border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group"
-          >
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-0.5">
-                <img 
-                  src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_THUMBNAIL(persona.lead_id))} 
-                  alt={persona.personal_info?.name || 'Person'}
-                  className="w-full h-full rounded-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = persona.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.personal_info?.name || 'Person')}&background=random`;
-                  }}
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{persona.personal_info?.name || 'Unknown'}</h3>
+      <div className="overflow-x-auto glass border border-border rounded-lg">
+        <table className="w-full">
+          <thead className="bg-muted/50 border-b border-border">
+            <tr>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Summary</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold">Classification</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold">Age Group</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Product Interest</th>
+              <th className="px-4 py-3 text-right text-sm font-semibold">Income</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {paginatedPersonas.map((persona, index) => (
+              <motion.tr
+                key={persona.lead_id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: index * 0.02 }}
+                className="hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handlePersonaClick(persona)}
+              >
+                <td className="px-4 py-3 text-sm text-muted-foreground max-w-md">
+                  <span className="line-clamp-2" title={persona.persona_summary}>
+                    {persona.persona_summary}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-center">
                   {persona.lead_classification && (
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       persona.lead_classification === 'hot' 
                         ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         : persona.lead_classification === 'warm'
@@ -294,36 +298,30 @@ export default function PersonasPage() {
                       {persona.lead_classification}
                     </span>
                   )}
-                </div>
-                <p className="text-xs text-muted-foreground">{persona.lead_id}</p>
-              </div>
-              <ChevronRight className="text-muted-foreground group-hover:text-blue-500 transition-colors" size={18} />
-            </div>
-
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {persona.persona_summary}
-            </p>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-1">
-                <User size={12} className="text-muted-foreground" />
-                <span>{persona.personal_info?.age || 'N/A'} yrs, {persona.personal_info?.occupation || 'N/A'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <DollarSign size={12} className="text-muted-foreground" />
-                <span>${persona.financial_info?.annual_income ? (persona.financial_info.annual_income / 1000).toFixed(0) : '0'}k/yr</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Shield size={12} className="text-muted-foreground" />
-                <span>{persona.product_interest || 'Not specified'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Calendar size={12} className="text-muted-foreground" />
-                <span>{persona.age_group || 'N/A'}</span>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+                </td>
+                <td className="px-4 py-3 text-center text-sm">
+                  <span className="px-2 py-1 bg-muted rounded text-xs font-medium">
+                    {persona.age_group || 'N/A'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {persona.product_interest || 'Not specified'}
+                </td>
+                <td className="px-4 py-3 text-right text-sm font-medium">
+                  ${persona.financial_info?.annual_income ? (persona.financial_info.annual_income / 1000).toFixed(0) : '0'}k
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <ChevronRight className="inline-block text-muted-foreground hover:text-blue-500 transition-colors" size={18} />
+                </td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
+        {paginatedPersonas.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground">
+            No personas found matching your criteria
+          </div>
+        )}
       </div>
 
       {totalPages > 1 && (

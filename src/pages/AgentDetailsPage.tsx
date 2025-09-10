@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Bot, ArrowLeft, Activity, TrendingUp, DollarSign, RefreshCw, Clock, CheckCircle, MessageCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bot, ArrowLeft, Activity, TrendingUp, DollarSign, RefreshCw, Clock, CheckCircle, MessageCircle, Database, FileText, Target, Zap, ChevronDown, ChevronUp, User, FileJson } from 'lucide-react';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -37,6 +37,13 @@ interface AgentInput {
   input_type: string;
 }
 
+interface TestDataRow {
+  id: string;
+  personaSummary: string;
+  data: string;
+  persona: string;
+}
+
 interface Agent {
   name: string;
   version: string;
@@ -45,6 +52,7 @@ interface Agent {
   outputs: string[];
   metrics: Record<string, number>;
   endpoint_for_testing: string;
+  testData?: TestDataRow[];
 }
 
 export default function AgentDetailsPage() {
@@ -54,10 +62,155 @@ export default function AgentDetailsPage() {
   const [agent, setAgent] = useState<Agent | null>(location.state?.agent || null);
   const [loading, setLoading] = useState(!agent);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const generateTestData = (): TestDataRow[] => {
+    return [
+      {
+        id: "TEST-001",
+        personaSummary: "High-income professional seeking comprehensive insurance coverage",
+        data: JSON.stringify({
+          "website_behavior": {
+            "pages_visited": ["life-insurance/premium", "investment-planning", "retirement-calculator"],
+            "time_spent": "45 minutes",
+            "downloads": ["Premium Life Insurance Guide PDF", "Investment Portfolio Checklist"]
+          },
+          "demographic_data": {
+            "age": 45,
+            "income": "$250,000",
+            "occupation": "Senior Executive",
+            "location": "New York, NY",
+            "marital_status": "Married",
+            "dependents": 2
+          },
+          "engagement_history": {
+            "email_opens": 12,
+            "link_clicks": 8,
+            "form_submissions": 3,
+            "calculator_usage": ["retirement", "life_coverage"]
+          }
+        }, null, 2),
+        persona: JSON.stringify({
+          "name": "Robert Chen",
+          "profile": "Established professional focused on wealth preservation and family security",
+          "insurance_needs": {
+            "primary": "Premium life insurance with investment component",
+            "secondary": ["Disability insurance", "Umbrella policy"],
+            "coverage_amount": "$2,000,000"
+          },
+          "behavioral_traits": {
+            "decision_making": "Research-driven, seeks expert advice",
+            "communication_preference": "Email and scheduled calls",
+            "buying_timeline": "2-3 months"
+          },
+          "recommendations": [
+            "Schedule consultation with senior advisor",
+            "Provide detailed comparison of premium products",
+            "Include estate planning resources"
+          ]
+        }, null, 2)
+      },
+      {
+        id: "TEST-002",
+        personaSummary: "Young family prioritizing financial protection for dependents",
+        data: JSON.stringify({
+          "website_behavior": {
+            "pages_visited": ["term-life-insurance", "child-education-planning", "mortgage-calculator"],
+            "time_spent": "25 minutes",
+            "downloads": ["Term Life Basics Guide"]
+          },
+          "demographic_data": {
+            "age": 32,
+            "income": "$85,000",
+            "occupation": "Software Developer",
+            "location": "Austin, TX",
+            "marital_status": "Married",
+            "dependents": 2,
+            "recent_life_events": ["New mortgage", "Second child born"]
+          },
+          "engagement_history": {
+            "email_opens": 8,
+            "link_clicks": 5,
+            "calculator_usage": ["term_life_coverage", "monthly_budget"]
+          }
+        }, null, 2),
+        persona: JSON.stringify({
+          "name": "Sarah Martinez",
+          "profile": "Young parent seeking affordable protection for growing family",
+          "insurance_needs": {
+            "primary": "20-year term life insurance",
+            "coverage_amount": "$750,000",
+            "budget": "$50-75/month"
+          },
+          "behavioral_traits": {
+            "decision_making": "Price-conscious, values simplicity",
+            "communication_preference": "Text messages and online chat",
+            "buying_timeline": "1-2 weeks"
+          },
+          "recommendations": [
+            "Offer online instant quote tool",
+            "Highlight affordable term options",
+            "Provide family protection calculator"
+          ]
+        }, null, 2)
+      },
+      {
+        id: "TEST-003",
+        personaSummary: "Pre-retiree exploring retirement income and healthcare options",
+        data: JSON.stringify({
+          "website_behavior": {
+            "pages_visited": ["medicare-supplements", "annuities", "retirement-income-planning"],
+            "time_spent": "55 minutes",
+            "downloads": ["Medicare Guide 2024", "Retirement Income Strategies"]
+          },
+          "demographic_data": {
+            "age": 58,
+            "income": "$120,000",
+            "occupation": "HR Director",
+            "location": "Phoenix, AZ",
+            "retirement_timeline": "5 years",
+            "401k_balance": "$450,000"
+          }
+        }, null, 2),
+        persona: JSON.stringify({
+          "name": "Michael Thompson",
+          "profile": "Planning transition from employer coverage to retirement",
+          "insurance_needs": {
+            "primary": "Medicare supplement plans",
+            "secondary": "Fixed annuity for guaranteed income",
+            "long_term_care": "Considering hybrid LTC policy"
+          },
+          "recommendations": [
+            "Schedule retirement planning consultation",
+            "Provide Medicare timeline and options",
+            "Discuss income gap analysis"
+          ]
+        }, null, 2)
+      }
+    ];
+  };
+
+  const toggleRowExpansion = (id: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     if (!agent && agentName) {
       fetchAgentDetails();
+    } else if (agent && !agent.testData) {
+      // Add test data to existing agent if it doesn't have it
+      setAgent({
+        ...agent,
+        testData: generateTestData()
+      });
     }
   }, [agentName]);
 
@@ -65,7 +218,12 @@ export default function AgentDetailsPage() {
     try {
       setLoading(true);
       const response = await axios.get(getApiEndpoint(`/agent/${agentName}`));
-      setAgent(response.data);
+      // Add test data if not present in API response
+      const agentData = response.data;
+      if (!agentData.testData) {
+        agentData.testData = generateTestData();
+      }
+      setAgent(agentData);
     } catch (err) {
       console.error('Error fetching agent details:', err);
       
@@ -88,7 +246,8 @@ export default function AgentDetailsPage() {
           "Accuracy rate": 92,
           "Processing time": 1.2
         },
-        endpoint_for_testing: "/test_digital_twin_agent"
+        endpoint_for_testing: "/test_digital_twin_agent",
+        testData: generateTestData()
       };
       setAgent(mockAgent);
     } finally {
@@ -310,6 +469,102 @@ export default function AgentDetailsPage() {
           </div>
         </div>
       </div>
+
+      {agent.testData && agent.testData.length > 0 && (
+        <div className="glass border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Database className="text-blue-500" size={20} />
+              <h2 className="text-lg font-semibold">Optimization Test Data</h2>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Click on a row to expand and view full data
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            {agent.testData.map((test, index) => (
+              <div key={test.id} className="border border-border rounded-lg overflow-hidden">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="bg-muted/20 hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() => toggleRowExpansion(test.id)}
+                >
+                  <div className="p-4 flex items-center justify-between">
+                    <div className="flex-1 grid grid-cols-4 gap-4 items-center">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Test ID</span>
+                        <p className="font-mono text-sm">{test.id}</p>
+                      </div>
+                      <div className="col-span-3">
+                        <span className="text-xs text-muted-foreground">Persona Summary</span>
+                        <p className="text-sm line-clamp-1">{test.personaSummary}</p>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      {expandedRows.has(test.id) ? (
+                        <ChevronUp className="text-muted-foreground" size={20} />
+                      ) : (
+                        <ChevronDown className="text-muted-foreground" size={20} />
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+                
+                <AnimatePresence>
+                  {expandedRows.has(test.id) && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="border-t border-border"
+                    >
+                      <div className="p-6 space-y-6">
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <FileJson className="text-blue-500" size={18} />
+                            <h4 className="font-semibold text-sm">Input Data</h4>
+                          </div>
+                          <div className="bg-muted/30 rounded-lg p-4 overflow-x-auto">
+                            <pre className="text-xs font-mono whitespace-pre-wrap break-words">
+                              {test.data}
+                            </pre>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <User className="text-purple-500" size={18} />
+                            <h4 className="font-semibold text-sm">Generated Persona</h4>
+                          </div>
+                          <div className="bg-muted/30 rounded-lg p-4 overflow-x-auto">
+                            <pre className="text-xs font-mono whitespace-pre-wrap break-words">
+                              {test.persona}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <div className="text-muted-foreground">
+              Showing {agent.testData.length} test scenarios
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Score:</span>
+              <span className="text-lg font-bold text-green-500">98%</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AgentChat
         agentId={agent.name}
