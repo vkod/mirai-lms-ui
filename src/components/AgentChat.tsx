@@ -21,7 +21,7 @@ interface AgentChatProps {
   onClose: () => void;
 }
 
-export default function AgentChat({ agentId, agentName, agentInputs, testEndpoint, isOpen, onClose }: AgentChatProps) {
+export default function AgentChat({ agentName, agentInputs, testEndpoint, isOpen, onClose }: AgentChatProps) {
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [response, setResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
