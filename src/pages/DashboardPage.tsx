@@ -6,10 +6,8 @@ import {
   Zap,
   Activity,
   Clock,
-  Award,
   Target,
   Brain,
-  UserCheck,
   MessageSquare,
   Sparkles,
   Shield,
@@ -18,8 +16,6 @@ import {
   PauseCircle,
 } from 'lucide-react';
 import {
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   LineChart,
@@ -29,7 +25,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
