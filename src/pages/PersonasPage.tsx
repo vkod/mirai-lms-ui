@@ -111,31 +111,16 @@ export default function PersonasPage() {
       
       const mockData: Persona[] = Array.from({ length: 50 }, (_, i) => ({
         lead_id: `LEAD-${1000 + i}`,
-        persona_summary: `Professional ${['working', 'retired', 'self-employed'][i % 3]} individual interested in ${['life insurance', 'health insurance', 'investment plans'][i % 3]}`,
-        personal_info: {
-          name: `Person ${i + 1}`,
-          age: 25 + (i % 40),
-          gender: i % 2 === 0 ? 'Male' : 'Female',
-          occupation: ['Engineer', 'Doctor', 'Business Owner', 'Teacher', 'Consultant'][i % 5],
-        },
-        demographic_info: {
-          location: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'][i % 5],
-          education: ['Bachelor', 'Master', 'PhD', 'High School'][i % 4],
-          marital_status: ['Single', 'Married', 'Divorced'][i % 3],
-        },
-        financial_info: {
-          annual_income: 50000 + (i * 2000),
-          savings: 10000 + (i * 1000),
-          investments: ['Stocks', 'Bonds', 'Real Estate', 'Mutual Funds'][i % 4],
-        },
-        insurance_history: {
-          current_policies: ['Term Life', 'Health', 'Auto'][i % 3] ? [['Term Life', 'Health', 'Auto'][i % 3]] : [],
-          claims_history: i % 5 === 0 ? ['Minor health claim - 2022'] : [],
-        },
-        product_interest: ['Life Insurance', 'Health Insurance', 'Investment Plans'][i % 3],
-        age_group: i < 20 ? '25-35' : i < 35 ? '36-50' : '51+',
-        photo_url: `https://ui-avatars.com/api/?name=Person+${i + 1}&background=random`,
         lead_classification: (['hot', 'warm', 'cold'] as const)[i % 3],
+        persona_summary: `Professional ${['working', 'retired', 'self-employed'][i % 3]} individual interested in ${['life insurance', 'health insurance', 'investment plans'][i % 3]}`,
+        full_name: `Person ${i + 1}`,
+        age: `${25 + (i % 40)}`,
+        gender: i % 2 === 0 ? 'Male' : 'Female',
+        occupation: ['Engineer', 'Doctor', 'Business Owner', 'Teacher', 'Consultant'][i % 5],
+        marital_status: ['Single', 'Married', 'Divorced'][i % 3],
+        education_level: ['Bachelor', 'Master', 'PhD', 'High School'][i % 4],
+        annual_income: `$${50 + (i * 2)}k`,
+        profile_image_url: `https://ui-avatars.com/api/?name=Person+${i + 1}&background=random`,
       }));
       
       setPersonas(mockData);

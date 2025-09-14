@@ -372,7 +372,7 @@ export default function AgentChat({ agentName, agentInputs, agentOutputs, testEn
                               ) : outputType === 'label' ? (
                                 // Simple label display (for execution_cost, etc.)
                                 <div className="text-sm mt-2">
-                                  {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                                  {typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : String(value || '')}
                                 </div>
                               ) : (
                                 // markdown (default)
