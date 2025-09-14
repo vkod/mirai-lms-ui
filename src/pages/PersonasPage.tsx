@@ -7,31 +7,24 @@ import { getApiEndpoint, API_ENDPOINTS } from '../config/api.config';
 
 interface Persona {
   lead_id: string;
-  persona_summary: string;
-  personal_info: {
-    name: string;
-    age: number;
-    gender: string;
-    occupation: string;
-  };
-  demographic_info: {
-    location: string;
-    education: string;
-    marital_status: string;
-  };
-  financial_info: {
-    annual_income: number;
-    savings: number;
-    investments: string;
-  };
-  insurance_history: {
-    current_policies: string[];
-    claims_history: string[];
-  };
-  product_interest?: string;
-  age_group?: string;
-  photo_url?: string;
   lead_classification?: 'hot' | 'warm' | 'cold';
+  persona_summary: string;
+  profile_image_url?: string;
+  full_name?: string;
+  age?: string;
+  marital_status?: string;
+  dependents?: string;
+  gender?: string;
+  life_stages?: string;
+  occupation?: string;
+  education_level?: string;
+  annual_income?: string;
+  employment_information?: string;
+  insurance_history?: string;
+  behaioral_signals?: string;
+  interaction_history?: string;
+  next_best_actions?: string;
+  markdown?: string;
 }
 
 export default function PersonasPage() {
@@ -45,13 +38,62 @@ export default function PersonasPage() {
   const [filters, setFilters] = useState({
     ageGroup: '',
     incomeRange: '',
-    productInterest: '',
   });
 
   const itemsPerPage = 30;
 
   useEffect(() => {
+    const abortController = new AbortController();
+    
+    const fetchPersonas = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          getApiEndpoint(API_ENDPOINTS.GET_SYNTHETIC_PERSONAS),
+          { signal: abortController.signal }
+        );
+        
+        if (!abortController.signal.aborted) {
+          setPersonas(response.data);
+          setFilteredPersonas(response.data);
+        }
+      } catch (err: any) {
+        if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
+          console.error('Error fetching personas:', err);
+          
+          // Only set mock data if the request wasn't aborted
+          if (!abortController.signal.aborted) {
+            const mockData: Persona[] = Array.from({ length: 50 }, (_, i) => ({
+              lead_id: `LEAD-${1000 + i}`,
+              lead_classification: (['hot', 'warm', 'cold'] as const)[i % 3],
+              persona_summary: `Professional ${['working', 'retired', 'self-employed'][i % 3]} individual interested in ${['life insurance', 'health insurance', 'investment plans'][i % 3]}`,
+              full_name: `Person ${i + 1}`,
+              age: `${25 + (i % 40)}`,
+              gender: i % 2 === 0 ? 'Male' : 'Female',
+              occupation: ['Engineer', 'Doctor', 'Business Owner', 'Teacher', 'Consultant'][i % 5],
+              marital_status: ['Single', 'Married', 'Divorced'][i % 3],
+              education_level: ['Bachelor', 'Master', 'PhD', 'High School'][i % 4],
+              annual_income: `$${50 + (i * 2)}k`,
+              profile_image_url: `https://ui-avatars.com/api/?name=Person+${i + 1}&background=random`,
+            }));
+            
+            setPersonas(mockData);
+            setFilteredPersonas(mockData);
+          }
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+    
     fetchPersonas();
+    
+    // Cleanup function to abort the request if component unmounts
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -108,20 +150,36 @@ export default function PersonasPage() {
 
     if (searchTerm) {
       filtered = filtered.filter(persona =>
-        persona.personal_info?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        persona.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         persona.lead_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         persona.persona_summary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        persona.personal_info?.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
+        persona.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (filters.ageGroup) {
-      filtered = filtered.filter(persona => persona.age_group === filters.ageGroup);
+      filtered = filtered.filter(persona => {
+        const age = parseInt(persona.age || '0');
+        switch (filters.ageGroup) {
+          case '25-35': return age >= 25 && age <= 35;
+          case '36-50': return age >= 36 && age <= 50;
+          case '51+': return age >= 51;
+          default: return true;
+        }
+      });
     }
 
     if (filters.incomeRange) {
       filtered = filtered.filter(persona => {
-        const income = persona.financial_info?.annual_income || 0;
+        const incomeStr = persona.annual_income?.toLowerCase() || '';
+        if (incomeStr.includes('unknown') || incomeStr === '') {
+          return filters.incomeRange === '';
+        }
+
+        // Try to extract numeric value from income string
+        const incomeMatch = incomeStr.match(/\d+/);
+        const income = incomeMatch ? parseInt(incomeMatch[0]) * 1000 : 0;
+
         switch (filters.incomeRange) {
           case '<50k': return income < 50000;
           case '50k-100k': return income >= 50000 && income < 100000;
@@ -130,12 +188,6 @@ export default function PersonasPage() {
           default: return true;
         }
       });
-    }
-
-    if (filters.productInterest) {
-      filtered = filtered.filter(persona => 
-        persona.product_interest === filters.productInterest
-      );
     }
 
     setFilteredPersonas(filtered);
@@ -166,7 +218,7 @@ export default function PersonasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-            Prospect Twins
+            Prospect Digital Twins
           </h1>
           <p className="text-muted-foreground mt-2">
             Manage and explore digital twins of your insurance prospects
@@ -207,7 +259,7 @@ export default function PersonasPage() {
           animate={{ opacity: 1, height: 'auto' }}
           className="glass border border-border rounded-lg p-4"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-muted-foreground">Age Group</label>
               <select
@@ -235,19 +287,6 @@ export default function PersonasPage() {
                 <option value=">200k">Over $200k</option>
               </select>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Product Interest</label>
-              <select
-                value={filters.productInterest}
-                onChange={(e) => setFilters({ ...filters, productInterest: e.target.value })}
-                className="w-full mt-1 px-3 py-2 bg-muted rounded-lg outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="">All Products</option>
-                <option value="Life Insurance">Life Insurance</option>
-                <option value="Health Insurance">Health Insurance</option>
-                <option value="Investment Plans">Investment Plans</option>
-              </select>
-            </div>
           </div>
         </motion.div>
       )}
@@ -262,9 +301,8 @@ export default function PersonasPage() {
             <tr>
               <th className="px-4 py-3 text-left text-sm font-semibold">Summary</th>
               <th className="px-4 py-3 text-center text-sm font-semibold">Classification</th>
-              <th className="px-4 py-3 text-center text-sm font-semibold">Age Group</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold">Product Interest</th>
-              <th className="px-4 py-3 text-right text-sm font-semibold">Income</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold">Age</th>
+              <th className="px-4 py-3 text-right text-sm font-semibold">Annual Income</th>
               <th className="px-4 py-3 text-center text-sm font-semibold">Action</th>
             </tr>
           </thead>
@@ -286,7 +324,7 @@ export default function PersonasPage() {
                 <td className="px-4 py-3 text-center">
                   {persona.lead_classification && (
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                      persona.lead_classification === 'hot' 
+                      persona.lead_classification === 'hot'
                         ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         : persona.lead_classification === 'warm'
                         ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
@@ -301,14 +339,11 @@ export default function PersonasPage() {
                 </td>
                 <td className="px-4 py-3 text-center text-sm">
                   <span className="px-2 py-1 bg-muted rounded text-xs font-medium">
-                    {persona.age_group || 'N/A'}
+                    {persona.age || 'Unknown'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm">
-                  {persona.product_interest || 'Not specified'}
-                </td>
                 <td className="px-4 py-3 text-right text-sm font-medium">
-                  ${persona.financial_info?.annual_income ? (persona.financial_info.annual_income / 1000).toFixed(0) : '0'}k
+                  {persona.annual_income || 'Unknown'}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <ChevronRight className="inline-block text-muted-foreground hover:text-blue-500 transition-colors" size={18} />

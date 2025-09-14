@@ -18,6 +18,8 @@ import {
 import axios from 'axios';
 import { getApiEndpoint } from '../config/api.config';
 import AgentChat from '../components/AgentChat';
+import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 
 ChartJS.register(
   CategoryScale,
@@ -37,6 +39,12 @@ interface AgentInput {
   input_type: string;
 }
 
+interface AgentOutput {
+  name: string;
+  output_desc: string;
+  output_type: 'markdown' | 'textarea' | 'image' | 'image_id' | 'label';
+}
+
 interface TestDataRow {
   id: string;
   personaSummary: string;
@@ -48,8 +56,9 @@ interface Agent {
   name: string;
   version: string;
   goal: string;
+  markdown?: string;
   inputs: AgentInput[];
-  outputs: string[];
+  outputs: AgentOutput[];
   metrics: Record<string, number>;
   endpoint_for_testing: string;
   testData?: TestDataRow[];
@@ -231,13 +240,53 @@ export default function AgentDetailsPage() {
         name: decodeURIComponent(agentName || ''),
         version: "1.0",
         goal: "Create an imaginary persona based on data provided and update the digital twin with data as much as possible.",
+        markdown: `## Overview
+This agent creates and maintains digital twins for personalization and targeting purposes.
+
+### Key Features
+- **Real-time Processing**: Processes user data in real-time to update digital twins
+- **Multi-source Integration**: Combines data from website traffic, behavior patterns, and transaction history
+- **Confidence Scoring**: Provides confidence metrics for each persona attribute
+
+### How It Works
+1. **Data Collection**: Gathers data from multiple sources
+2. **Pattern Recognition**: Identifies behavioral patterns and preferences
+3. **Twin Generation**: Creates or updates the digital twin profile
+4. **Validation**: Applies confidence scoring to ensure accuracy
+
+### Best Practices
+- Ensure data quality before processing
+- Review confidence scores for critical decisions
+- Regular updates maintain twin accuracy
+
+### API Usage
+\`\`\`json
+{
+  "website_traffic": "user activity data",
+  "existing_twin": "previous twin data if available",
+  "user_behavior": "behavioral patterns",
+  "transaction_history": "purchase history"
+}
+\`\`\`
+
+### Performance Metrics
+| Metric | Target | Current |
+|--------|--------|---------|
+| Accuracy | > 90% | 92% |
+| Processing Time | < 2s | 1.2s |
+| Success Rate | > 95% | 97% |
+`,
         inputs: [
           { name: "website_traffic", input_desc: "Website traffic data", input_type: "textarea" },
           { name: "existing_twin", input_desc: "Existing Digital twin if any", input_type: "textarea" },
           { name: "user_behavior", input_desc: "User behavior patterns", input_type: "textarea" },
           { name: "transaction_history", input_desc: "Transaction history", input_type: "textarea" }
         ],
-        outputs: ["Updated/New Digital twin", "Confidence scores", "Recommendations"],
+        outputs: [
+          { name: "digital_twin", output_desc: "Updated/New Digital twin", output_type: "markdown" },
+          { name: "confidence_scores", output_desc: "Confidence scores", output_type: "textarea" },
+          { name: "recommendations", output_desc: "Recommendations", output_type: "markdown" }
+        ],
         metrics: {
           "Data processed": 100,
           "Digital twins created": 78,
@@ -402,8 +451,97 @@ export default function AgentDetailsPage() {
 
       <div className="glass border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-3">Goal</h2>
-        <p className="text-muted-foreground">{agent.goal}</p>
+        <div className="prose prose-invert max-w-none text-muted-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+          <ReactMarkdown
+            remarkPlugins={[remarkBreaks]}
+            components={{
+              pre: ({ children }) => (
+                <pre className="bg-background/50 p-3 rounded-lg overflow-x-auto">{children}</pre>
+              ),
+              code: ({ children }) => (
+                <code className="bg-background/50 px-1 py-0.5 rounded text-sm">{children}</code>
+              ),
+              ul: ({ children }) => (
+                <ul className="list-disc list-inside space-y-1">{children}</ul>
+              ),
+              ol: ({ children }) => (
+                <ol className="list-decimal list-inside space-y-1">{children}</ol>
+              ),
+              h1: ({ children }) => <h1 className="text-2xl font-bold mb-3">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-lg font-semibold mb-2">{children}</h3>,
+              p: ({ children }) => <p className="mb-3">{children}</p>,
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-blue-500 pl-4 italic my-3">{children}</blockquote>
+              ),
+              table: ({ children }) => (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-border">{children}</table>
+                </div>
+              ),
+              th: ({ children }) => (
+                <th className="px-3 py-2 text-left text-sm font-semibold">{children}</th>
+              ),
+              td: ({ children }) => (
+                <td className="px-3 py-2 text-sm">{children}</td>
+              )
+            }}
+          >
+            {agent.goal}
+          </ReactMarkdown>
+        </div>
       </div>
+
+      {agent.markdown && (
+        <div className="glass border border-border rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4">Documentation</h2>
+          <div className="prose prose-invert max-w-none text-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <ReactMarkdown
+              remarkPlugins={[remarkBreaks]}
+              components={{
+                pre: ({ children }) => (
+                  <pre className="bg-background/50 p-3 rounded-lg overflow-x-auto">{children}</pre>
+                ),
+                code: ({ children }) => (
+                  <code className="bg-background/50 px-1 py-0.5 rounded text-sm">{children}</code>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc list-inside space-y-1">{children}</ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-inside space-y-1">{children}</ol>
+                ),
+                h1: ({ children }) => <h1 className="text-2xl font-bold mb-3">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-lg font-semibold mb-2">{children}</h3>,
+                p: ({ children }) => <p className="mb-3">{children}</p>,
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-blue-500 pl-4 italic my-3">{children}</blockquote>
+                ),
+                table: ({ children }) => (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-border">{children}</table>
+                  </div>
+                ),
+                th: ({ children }) => (
+                  <th className="px-3 py-2 text-left text-sm font-semibold">{children}</th>
+                ),
+                td: ({ children }) => (
+                  <td className="px-3 py-2 text-sm">{children}</td>
+                ),
+                a: ({ children, href }) => (
+                  <a href={href} className="text-blue-500 hover:text-blue-400 underline" target="_blank" rel="noopener noreferrer">
+                    {children}
+                  </a>
+                ),
+                hr: () => <hr className="my-4 border-border" />
+              }}
+            >
+              {agent.markdown}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass border border-border rounded-xl p-6">
@@ -420,11 +558,18 @@ export default function AgentDetailsPage() {
 
         <div className="glass border border-border rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4">Outputs</h3>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {agent.outputs.map((output, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                <span className="text-sm">{output}</span>
+              <div key={idx} className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5"></div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{output.output_desc}</span>
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-muted">
+                      {output.output_type}
+                    </span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -570,6 +715,7 @@ export default function AgentDetailsPage() {
         agentId={agent.name}
         agentName={agent.name}
         agentInputs={agent.inputs}
+        agentOutputs={agent.outputs}
         testEndpoint={agent.endpoint_for_testing}
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}

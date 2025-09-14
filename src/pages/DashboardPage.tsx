@@ -151,7 +151,7 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <Users size={20} />
-                Prospect Twins
+                Prospect Digital Twins
               </h2>
               <p className="text-sm text-muted-foreground mt-1">Digital replicas engaging with targets</p>
             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, User, MapPin, DollarSign, 
@@ -8,56 +8,36 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import { getApiEndpoint, API_ENDPOINTS } from '../config/api.config';
 
 interface Persona {
   lead_id: string;
-  persona_summary: string;
-  personal_info: {
-    name: string;
-    age: number;
-    gender: string;
-    occupation: string;
-    email?: string;
-    phone?: string;
-  };
-  demographic_info: {
-    location: string;
-    education: string;
-    marital_status: string;
-    dependents?: number;
-  };
-  financial_info: {
-    annual_income: number;
-    savings: number;
-    investments: string;
-    credit_score?: number;
-  };
-  insurance_history: {
-    current_policies: string[];
-    claims_history: string[];
-    premium_paid?: number;
-  };
-  behavioral_signals?: {
-    online_activity: string;
-    purchase_behavior: string;
-    communication_preference: string;
-  };
-  engagement_opportunities?: {
-    best_time_to_contact: string;
-    preferred_products: string[];
-    risk_tolerance: string;
-  };
-  photo_url?: string;
   lead_classification?: 'hot' | 'warm' | 'cold';
+  persona_summary: string;
+  profile_image_url?: string;
+  full_name?: string;
+  age?: string;
+  marital_status?: string;
+  dependents?: string;
+  gender?: string;
+  life_stages?: string;
+  occupation?: string;
+  education_level?: string;
+  annual_income?: string;
+  employment_information?: string;
+  insurance_history?: string;
+  behaioral_signals?: string;
+  interaction_history?: string;
+  next_best_actions?: string;
+  markdown?: string;
 }
 
 export default function PersonaDetailsPage() {
   const { leadId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [persona, setPersona] = useState<Persona | null>(location.state?.persona || null);
-  const [loading, setLoading] = useState(!persona);
+  const [persona, setPersona] = useState<Persona | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'markdown'>('overview');
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -66,7 +46,7 @@ export default function PersonaDetailsPage() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   useEffect(() => {
-    if (!persona && leadId) {
+    if (leadId) {
       fetchPersonaDetails();
     }
   }, [leadId]);
@@ -78,49 +58,6 @@ export default function PersonaDetailsPage() {
       setPersona(response.data);
     } catch (err) {
       console.error('Error fetching persona details:', err);
-      
-      const mockPersona: Persona = {
-        lead_id: leadId || 'LEAD-1001',
-        persona_summary: "Tech-savvy professional with a growing family, interested in comprehensive life insurance coverage and investment opportunities. Shows high engagement with digital channels and prefers self-service options.",
-        personal_info: {
-          name: 'John Smith',
-          age: 35,
-          gender: 'Male',
-          occupation: 'Software Engineer',
-          email: 'john.smith@example.com',
-          phone: '+1 (555) 123-4567'
-        },
-        demographic_info: {
-          location: 'San Francisco, CA',
-          education: "Master's Degree",
-          marital_status: 'Married',
-          dependents: 2
-        },
-        financial_info: {
-          annual_income: 150000,
-          savings: 75000,
-          investments: 'Stocks, 401k, Real Estate',
-          credit_score: 780
-        },
-        insurance_history: {
-          current_policies: ['Term Life - $500k', 'Health Insurance - Family Plan'],
-          claims_history: ['Minor health claim - 2022 ($1,200)'],
-          premium_paid: 3600
-        },
-        behavioral_signals: {
-          online_activity: 'High - Daily website visits, mobile app user',
-          purchase_behavior: 'Research-driven, compares multiple options',
-          communication_preference: 'Email and mobile app notifications'
-        },
-        engagement_opportunities: {
-          best_time_to_contact: 'Evenings (6-8 PM) and weekends',
-          preferred_products: ['Whole Life Insurance', 'Investment-linked Plans', 'Child Education Plans'],
-          risk_tolerance: 'Moderate - Balanced portfolio approach'
-        },
-        photo_url: `https://ui-avatars.com/api/?name=John+Smith&background=random&size=200`,
-        lead_classification: 'hot'
-      };
-      setPersona(mockPersona);
     } finally {
       setLoading(false);
     }
@@ -128,63 +65,15 @@ export default function PersonaDetailsPage() {
 
   const generateMarkdown = () => {
     if (!persona) return '';
-    
-    return `# Lead Profile: ${persona.lead_id}
 
-## Persona Summary
-${persona.persona_summary}
-
-## Personal Information
-- **Name:** ${persona.personal_info?.name || 'N/A'}
-- **Age:** ${persona.personal_info?.age || 'N/A'}
-- **Gender:** ${persona.personal_info?.gender || 'N/A'}
-- **Occupation:** ${persona.personal_info?.occupation || 'N/A'}
-${persona.personal_info?.email ? `- **Email:** ${persona.personal_info.email}` : ''}
-${persona.personal_info?.phone ? `- **Phone:** ${persona.personal_info.phone}` : ''}
-${persona.lead_classification ? `- **Lead Classification:** ${persona.lead_classification.charAt(0).toUpperCase() + persona.lead_classification.slice(1)}` : ''}
-
-## Demographic Information
-- **Location:** ${persona.demographic_info?.location || 'N/A'}
-- **Education:** ${persona.demographic_info?.education || 'N/A'}
-- **Marital Status:** ${persona.demographic_info?.marital_status || 'N/A'}
-${persona.demographic_info?.dependents ? `- **Dependents:** ${persona.demographic_info.dependents}` : ''}
-
-## Financial Information
-- **Annual Income:** $${persona.financial_info?.annual_income?.toLocaleString() || '0'}
-- **Savings:** $${persona.financial_info?.savings?.toLocaleString() || '0'}
-- **Investments:** ${persona.financial_info?.investments || 'N/A'}
-${persona.financial_info?.credit_score ? `- **Credit Score:** ${persona.financial_info.credit_score}` : ''}
-
-## Insurance History
-### Current Policies
-${(persona.insurance_history?.current_policies || []).map(p => `- ${p}`).join('\n') || '- None'}
-
-### Claims History
-${(persona.insurance_history?.claims_history || []).length > 0 
-  ? (persona.insurance_history?.claims_history || []).map(c => `- ${c}`).join('\n')
-  : '- No claims'}
-
-${persona.behavioral_signals ? `
-## Behavioral Signals & Preferences
-- **Online Activity:** ${persona.behavioral_signals.online_activity}
-- **Purchase Behavior:** ${persona.behavioral_signals.purchase_behavior}
-- **Communication Preference:** ${persona.behavioral_signals.communication_preference}
-` : ''}
-
-${persona.engagement_opportunities ? `
-## Engagement & Opportunities
-- **Best Time to Contact:** ${persona.engagement_opportunities.best_time_to_contact}
-- **Risk Tolerance:** ${persona.engagement_opportunities.risk_tolerance}
-### Preferred Products
-${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\n')}
-` : ''}`;
+    return persona.markdown || '';
   };
 
   const handleVirtualChat = () => {
     setShowChat(!showChat);
     if (!showChat && chatHistory.length === 0) {
       setChatHistory([
-        { role: 'assistant', message: `Hello! I'm ${persona?.personal_info?.name || 'your digital twin'}. I'm interested in learning more about your insurance products.` }
+        { role: 'assistant', message: `Hello! I'm ${persona?.full_name || 'your digital twin'}. I'm interested in learning more about your insurance products.` }
       ]);
     }
   };
@@ -261,7 +150,7 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">{persona.personal_info?.name || 'Unknown'}</h1>
+            <h1 className="text-3xl font-bold">{persona.full_name || 'Unknown'}</h1>
             {persona.lead_classification && (
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
                 persona.lead_classification === 'hot' 
@@ -288,18 +177,18 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
               className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1 mb-4 cursor-pointer hover:scale-105 transition-transform"
               onClick={() => setShowImageModal(true)}
             >
-              <img 
-                src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_MEDIUM(persona.lead_id))} 
-                alt={persona.personal_info?.name || 'Person'}
+              <img
+                src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_MEDIUM(persona.lead_id))}
+                alt={persona.full_name || 'Person'}
                 className="w-full h-full rounded-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = persona.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.personal_info?.name || 'Person')}&background=random&size=200`;
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.full_name || 'Person')}&background=random&size=200`;
                 }}
               />
             </div>
             
-            <h2 className="text-xl font-semibold mb-1">{persona.personal_info?.name || 'Unknown'}</h2>
-            <p className="text-sm text-muted-foreground mb-4">{persona.personal_info?.occupation || 'N/A'}</p>
+            <h2 className="text-xl font-semibold mb-1">{persona.full_name || 'Unknown'}</h2>
+            <p className="text-sm text-muted-foreground mb-4">{persona.occupation || 'Unknown'}</p>
             
             <div className="space-y-2 mb-4">
               <button
@@ -361,20 +250,16 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
                         Personal Information
                       </h4>
                       <div className="space-y-1 text-sm">
-                        <p><span className="text-muted-foreground">Age:</span> {persona.personal_info?.age || 'N/A'}</p>
-                        <p><span className="text-muted-foreground">Gender:</span> {persona.personal_info?.gender || 'N/A'}</p>
-                        <p><span className="text-muted-foreground">Occupation:</span> {persona.personal_info?.occupation || 'N/A'}</p>
-                        {persona.personal_info?.email && (
-                          <p><span className="text-muted-foreground">Email:</span> {persona.personal_info.email}</p>
-                        )}
-                        {persona.personal_info?.phone && (
-                          <p><span className="text-muted-foreground">Phone:</span> {persona.personal_info.phone}</p>
-                        )}
+                        <p><span className="text-muted-foreground">Name:</span> {persona.full_name || 'Unknown'}</p>
+                        <p><span className="text-muted-foreground">Age:</span> {persona.age || 'Unknown'}</p>
+                        <p><span className="text-muted-foreground">Gender:</span> {persona.gender || 'Unknown'}</p>
+                        <p><span className="text-muted-foreground">Occupation:</span> {persona.occupation || 'Unknown'}</p>
+                        <p><span className="text-muted-foreground">Life Stage:</span> {persona.life_stages || 'Unknown'}</p>
                         {persona.lead_classification && (
                           <p className="flex items-center gap-2">
                             <span className="text-muted-foreground">Lead Status:</span>
                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                              persona.lead_classification === 'hot' 
+                              persona.lead_classification === 'hot'
                                 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                 : persona.lead_classification === 'warm'
                                 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
@@ -396,12 +281,10 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
                         Demographic Information
                       </h4>
                       <div className="space-y-1 text-sm">
-                        <p><span className="text-muted-foreground">Location:</span> {persona.demographic_info?.location || 'N/A'}</p>
-                        <p><span className="text-muted-foreground">Education:</span> {persona.demographic_info?.education || 'N/A'}</p>
-                        <p><span className="text-muted-foreground">Marital Status:</span> {persona.demographic_info?.marital_status || 'N/A'}</p>
-                        {persona.demographic_info?.dependents !== undefined && (
-                          <p><span className="text-muted-foreground">Dependents:</span> {persona.demographic_info.dependents}</p>
-                        )}
+                        <p><span className="text-muted-foreground">Education:</span> {persona.education_level || 'Unknown'}</p>
+                        <p><span className="text-muted-foreground">Marital Status:</span> {persona.marital_status || 'Unknown'}</p>
+                        <p><span className="text-muted-foreground">Dependents:</span> {persona.dependents || 'Unknown'}</p>
+                        <p><span className="text-muted-foreground">Employment:</span> {persona.employment_information || 'Unknown'}</p>
                       </div>
                     </div>
                   </div>
@@ -413,82 +296,54 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
                         Financial Information
                       </h4>
                       <div className="space-y-1 text-sm">
-                        <p><span className="text-muted-foreground">Annual Income:</span> ${persona.financial_info?.annual_income?.toLocaleString() || '0'}</p>
-                        <p><span className="text-muted-foreground">Savings:</span> ${persona.financial_info?.savings?.toLocaleString() || '0'}</p>
-                        <p><span className="text-muted-foreground">Investments:</span> {persona.financial_info?.investments || 'N/A'}</p>
-                        {persona.financial_info?.credit_score && (
-                          <p><span className="text-muted-foreground">Credit Score:</span> {persona.financial_info.credit_score}</p>
-                        )}
+                        <p><span className="text-muted-foreground">Annual Income:</span> {persona.annual_income || 'Unknown'}</p>
                       </div>
                     </div>
 
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Shield size={18} className="text-orange-500" />
-                        Insurance History
+                        Insurance Information
                       </h4>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <p className="text-muted-foreground mb-1">Current Policies:</p>
-                          {(persona.insurance_history?.current_policies || []).map((policy, idx) => (
-                            <p key={idx} className="ml-4">• {policy}</p>
-                          ))}
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground mb-1">Claims History:</p>
-                          {(persona.insurance_history?.claims_history || []).length > 0 ? (
-                            (persona.insurance_history?.claims_history || []).map((claim, idx) => (
-                              <p key={idx} className="ml-4">• {claim}</p>
-                            ))
-                          ) : (
-                            <p className="ml-4">• No claims</p>
-                          )}
-                        </div>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="text-muted-foreground">Insurance History:</span></p>
+                        <p className="ml-4 text-xs">{persona.insurance_history || 'Unknown'}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {persona.behavioral_signals && (
+                {persona.behaioral_signals && (
                   <div>
                     <h4 className="font-medium mb-2 flex items-center gap-2">
                       <Heart size={18} className="text-red-500" />
-                      Behavioral Signals & Preferences
+                      Behavioral Signals
                     </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Online Activity:</p>
-                        <p>{persona.behavioral_signals?.online_activity || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Purchase Behavior:</p>
-                        <p>{persona.behavioral_signals?.purchase_behavior || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Communication:</p>
-                        <p>{persona.behavioral_signals?.communication_preference || 'N/A'}</p>
-                      </div>
+                    <div className="text-sm">
+                      <p>{persona.behaioral_signals}</p>
                     </div>
                   </div>
                 )}
 
-                {persona.engagement_opportunities && (
+                {(persona.interaction_history || persona.next_best_actions) && (
                   <div>
                     <h4 className="font-medium mb-2 flex items-center gap-2">
                       <TrendingUp size={18} className="text-blue-500" />
                       Engagement & Opportunities
                     </h4>
                     <div className="space-y-2 text-sm">
-                      <p><span className="text-muted-foreground">Best Time to Contact:</span> {persona.engagement_opportunities?.best_time_to_contact || 'N/A'}</p>
-                      <p><span className="text-muted-foreground">Risk Tolerance:</span> {persona.engagement_opportunities?.risk_tolerance || 'N/A'}</p>
-                      <div>
-                        <p className="text-muted-foreground mb-1">Preferred Products:</p>
-                        {(persona.engagement_opportunities?.preferred_products || []).map((product, idx) => (
-                          <span key={idx} className="inline-block mr-2 mb-1 px-2 py-1 bg-blue-500/10 text-blue-500 rounded text-xs">
-                            {product}
-                          </span>
-                        ))}
-                      </div>
+                      {persona.interaction_history && (
+                        <div>
+                          <p className="text-muted-foreground mb-1">Interaction History:</p>
+                          <p className="ml-4">{persona.interaction_history}</p>
+                        </div>
+                      )}
+                      {persona.next_best_actions && (
+                        <div>
+                          <p className="text-muted-foreground mb-1">Next Best Actions:</p>
+                          <p className="ml-4">{persona.next_best_actions}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -496,6 +351,7 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
             ) : (
               <div className="bg-muted/30 rounded-lg p-6 prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown
+                  remarkPlugins={[remarkBreaks]}
                   components={{
                     h1: ({children}) => <h1 className="text-2xl font-bold mb-4 text-foreground">{children}</h1>,
                     h2: ({children}) => <h2 className="text-xl font-semibold mt-6 mb-3 text-foreground">{children}</h2>,
@@ -504,9 +360,25 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
                     ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
                     li: ({children}) => <li className="text-foreground">{children}</li>,
                     strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
+                    code: ({children}) => <code className="bg-background/50 px-1 py-0.5 rounded text-sm">{children}</code>,
+                    pre: ({children}) => <pre className="bg-background/50 p-3 rounded-lg overflow-x-auto">{children}</pre>,
+                    blockquote: ({children}) => <blockquote className="border-l-4 border-blue-500 pl-4 italic my-3">{children}</blockquote>,
+                    table: ({children}) => (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-border">{children}</table>
+                      </div>
+                    ),
+                    th: ({children}) => <th className="px-3 py-2 text-left text-sm font-semibold">{children}</th>,
+                    td: ({children}) => <td className="px-3 py-2 text-sm">{children}</td>,
+                    a: ({children, href}) => (
+                      <a href={href} className="text-blue-500 hover:text-blue-400 underline" target="_blank" rel="noopener noreferrer">
+                        {children}
+                      </a>
+                    ),
+                    hr: () => <hr className="my-4 border-border" />
                   }}
                 >
-                  {generateMarkdown()}
+                  {persona.markdown || generateMarkdown()}
                 </ReactMarkdown>
               </div>
             )}
@@ -523,17 +395,17 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-0.5">
-                <img 
-                  src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_THUMBNAIL(persona.lead_id))} 
-                  alt={persona.personal_info?.name || 'Person'}
+                <img
+                  src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_THUMBNAIL(persona.lead_id))}
+                  alt={persona.full_name || 'Person'}
                   className="w-full h-full rounded-full object-cover"
                   onError={(e) => {
-                    e.currentTarget.src = persona.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.personal_info?.name || 'Person')}&background=random`;
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.full_name || 'Person')}&background=random`;
                   }}
                 />
               </div>
               <div>
-                <p className="font-medium text-sm">{persona.personal_info?.name || 'Unknown'}</p>
+                <p className="font-medium text-sm">{persona.full_name || 'Unknown'}</p>
                 <p className="text-xs text-muted-foreground">Virtual Chat</p>
               </div>
             </div>
@@ -617,14 +489,14 @@ ${persona.engagement_opportunities.preferred_products.map(p => `- ${p}`).join('\
             </button>
             <img
               src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE(persona.lead_id))}
-              alt={persona.personal_info?.name || 'Person'}
+              alt={persona.full_name || 'Person'}
               className="w-full h-full object-contain rounded-lg"
               onError={(e) => {
-                e.currentTarget.src = persona.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.personal_info?.name || 'Person')}&background=random&size=500`;
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.full_name || 'Person')}&background=random&size=500`;
               }}
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b-lg">
-              <h3 className="text-white text-lg font-semibold">{persona.personal_info?.name || 'Unknown'}</h3>
+              <h3 className="text-white text-lg font-semibold">{persona.full_name || 'Unknown'}</h3>
               <p className="text-white/80 text-sm">{persona.lead_id}</p>
             </div>
           </motion.div>

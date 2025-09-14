@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Bot, Loader } from 'lucide-react';
+import { X, Send, Bot, Loader, DollarSign, Image as ImageIcon } from 'lucide-react';
 import axios from 'axios';
 import { getApiEndpoint } from '../config/api.config';
 import ReactMarkdown from 'react-markdown';
@@ -12,25 +12,119 @@ interface AgentInput {
   input_type: string;
 }
 
+interface AgentOutput {
+  name: string;
+  output_desc: string;
+  output_type: 'markdown' | 'textarea' | 'image' | 'image_id' | 'label';
+}
+
 interface AgentChatProps {
   agentId: string;
   agentName: string;
   agentInputs: AgentInput[];
+  agentOutputs?: AgentOutput[];
   testEndpoint: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function AgentChat({ agentName, agentInputs, testEndpoint, isOpen, onClose }: AgentChatProps) {
+// Component to handle image output with API call
+function ImageOutput({ value, outputDesc, isImageId = false }: { value: string; outputDesc: string; isImageId?: boolean }) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log('ImageOutput received value:', value, 'isImageId:', isImageId); // Debug log
+    if (value) {
+      // Check if value is already a URL and not an image ID
+      if (!isImageId && typeof value === 'string' && value.startsWith('http')) {
+        console.log('Value is already a URL:', value); // Debug log
+        setImageUrl(value);
+      } else {
+        // Make API call to get the image (either it's an ID or isImageId is true)
+        console.log('Fetching image from API for:', value); // Debug log
+        setIsLoadingImage(true);
+        setImageError(null);
+        
+        const imageEndpoint = `/persona_image/${value}`;
+        console.log('Image API endpoint:', getApiEndpoint(imageEndpoint)); // Debug log
+        
+        axios.get(getApiEndpoint(imageEndpoint), { responseType: 'blob' })
+          .then(response => {
+            const url = URL.createObjectURL(response.data);
+            setImageUrl(url);
+          })
+          .catch(error => {
+            console.error('Error fetching image:', error);
+            setImageError('Failed to load image');
+          })
+          .finally(() => {
+            setIsLoadingImage(false);
+          });
+      }
+    }
+  }, [value]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (imageUrl && imageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [imageUrl]);
+
+  if (isLoadingImage) {
+    return (
+      <div className="mt-2 flex items-center justify-center p-8 bg-background/30 rounded-lg">
+        <Loader className="animate-spin" size={24} />
+      </div>
+    );
+  }
+
+  if (imageError) {
+    return (
+      <div className="mt-2 flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+        <ImageIcon size={20} className="text-red-500" />
+        <span className="text-sm text-red-500">{imageError}</span>
+      </div>
+    );
+  }
+
+  if (imageUrl) {
+    return (
+      <div className="mt-2">
+        <img 
+          src={imageUrl} 
+          alt={outputDesc}
+          className="max-w-full rounded-lg"
+          onError={() => setImageError('Failed to display image')}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-2 p-3 bg-background/30 rounded-lg">
+      <ImageIcon size={20} className="text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">{value}</span>
+    </div>
+  );
+}
+
+export default function AgentChat({ agentName, agentInputs, agentOutputs, testEndpoint, isOpen, onClose }: AgentChatProps) {
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
-  const [response, setResponse] = useState<string>('');
+  const [response, setResponse] = useState<any>(null);
+  const [executionCost, setExecutionCost] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setInputValues({});
-      setResponse('');
+      setResponse(null);
+      setExecutionCost(null);
     }
   }, [isOpen]);
 
@@ -48,7 +142,8 @@ export default function AgentChat({ agentName, agentInputs, testEndpoint, isOpen
     if (!hasValues) return;
 
     setIsLoading(true);
-    setResponse('');
+    setResponse(null);
+    setExecutionCost(null);
 
     try {
       // Create inputs dictionary with input names as keys
@@ -65,12 +160,17 @@ export default function AgentChat({ agentName, agentInputs, testEndpoint, isOpen
       // Send only the inputs dictionary directly, without agent_id
       const response = await axios.post(getApiEndpoint(testEndpoint), inputsDict);
 
-      // Get the response and replace literal \n with actual newlines
-      const responseText = response.data.response || response.data.answer || response.data.result || JSON.stringify(response.data, null, 2);
-      const formattedResponse = typeof responseText === 'string' 
-        ? responseText.replace(/\\n/g, '\n').replace(/\\t/g, '\t')
-        : responseText;
-      setResponse(formattedResponse);
+      console.log('API Response:', response.data); // Debug log
+      console.log('Agent Outputs Config:', agentOutputs); // Debug log
+
+      // Extract execution cost if present
+      if (response.data.execution_cost !== undefined) {
+        setExecutionCost(response.data.execution_cost);
+      }
+      
+      // Handle structured response - the API is returning an object with multiple fields
+      // This includes cases like {"generated_image": "uuid", "execution_cost": 0.0005}
+      setResponse(response.data);
     } catch (error) {
       console.error('Error processing request:', error);
       setResponse('Sorry, I encountered an error processing your request. Please try again.');
@@ -188,48 +288,115 @@ export default function AgentChat({ agentName, agentInputs, testEndpoint, isOpen
                     </div>
                   </div>
                 ) : response ? (
-                  <div className="bg-muted rounded-lg p-4">
-                    <div className="prose prose-invert max-w-none text-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkBreaks]}
-                        components={{
-                          pre: ({ children }) => (
-                            <pre className="bg-background/50 p-3 rounded-lg overflow-x-auto">{children}</pre>
-                          ),
-                          code: ({ children }) => {
-                            return (
-                              <code className="bg-background/50 px-1 py-0.5 rounded text-sm">{children}</code>
-                            );
-                          },
-                        ul: ({ children }) => (
-                          <ul className="list-disc list-inside space-y-1">{children}</ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="list-decimal list-inside space-y-1">{children}</ol>
-                        ),
-                        h1: ({ children }) => <h1 className="text-2xl font-bold mb-3">{children}</h1>,
-                        h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
-                        h3: ({ children }) => <h3 className="text-lg font-semibold mb-2">{children}</h3>,
-                        p: ({ children }) => <p className="mb-3">{children}</p>,
-                        blockquote: ({ children }) => (
-                          <blockquote className="border-l-4 border-blue-500 pl-4 italic my-3">{children}</blockquote>
-                        ),
-                        table: ({ children }) => (
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-border">{children}</table>
-                          </div>
-                        ),
-                        th: ({ children }) => (
-                          <th className="px-3 py-2 text-left text-sm font-semibold">{children}</th>
-                        ),
-                        td: ({ children }) => (
-                          <td className="px-3 py-2 text-sm">{children}</td>
-                        )
-                        }}
-                      >
-                        {response}
-                      </ReactMarkdown>
-                    </div>
+                  <div className="space-y-4">
+                    {/* Render response based on output type */}
+                    {typeof response === 'string' ? (
+                      // Simple string response (backward compatibility)
+                      <div className="bg-muted rounded-lg p-4">
+                        <div className="prose prose-invert max-w-none text-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkBreaks]}
+                            components={{
+                              pre: ({ children }) => (
+                                <pre className="bg-background/50 p-3 rounded-lg overflow-x-auto">{children}</pre>
+                              ),
+                              code: ({ children }) => {
+                                return (
+                                  <code className="bg-background/50 px-1 py-0.5 rounded text-sm">{children}</code>
+                                );
+                              },
+                              ul: ({ children }) => (
+                                <ul className="list-disc list-inside space-y-1">{children}</ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="list-decimal list-inside space-y-1">{children}</ol>
+                              ),
+                              h1: ({ children }) => <h1 className="text-2xl font-bold mb-3">{children}</h1>,
+                              h2: ({ children }) => <h2 className="text-xl font-semibold mb-2">{children}</h2>,
+                              h3: ({ children }) => <h3 className="text-lg font-semibold mb-2">{children}</h3>,
+                              p: ({ children }) => <p className="mb-3">{children}</p>,
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-blue-500 pl-4 italic my-3">{children}</blockquote>
+                              ),
+                              table: ({ children }) => (
+                                <div className="overflow-x-auto">
+                                  <table className="min-w-full divide-y divide-border">{children}</table>
+                                </div>
+                              ),
+                              th: ({ children }) => (
+                                <th className="px-3 py-2 text-left text-sm font-semibold">{children}</th>
+                              ),
+                              td: ({ children }) => (
+                                <td className="px-3 py-2 text-sm">{children}</td>
+                              )
+                            }}
+                          >
+                            {response}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    ) : (
+                      // Structured response with multiple outputs
+                      <div className="space-y-4">
+                        {Object.entries(response).map(([key, value]) => {
+                          if (key === 'execution_cost') return null; // Handle separately
+                          
+                          // Find the output config from the array by matching the name
+                          const outputConfig = agentOutputs?.find(output => output.name === key);
+                          const outputType = outputConfig?.output_type || 'markdown';
+                          const outputDesc = outputConfig?.output_desc || key;
+                          
+                          console.log(`Rendering output: ${key}, type: ${outputType}, value:`, value); // Debug log
+                          
+                          return (
+                            <div key={key} className="bg-muted rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-semibold">{outputDesc}</span>
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-background/50">
+                                  {outputType}
+                                </span>
+                              </div>
+                              
+                              {(outputType === 'image' || outputType === 'image_id') ? (
+                                <ImageOutput 
+                                  value={value as string} 
+                                  outputDesc={outputDesc}
+                                  isImageId={outputType === 'image_id'}
+                                />
+                              ) : outputType === 'textarea' ? (
+                                <div className="bg-background/30 rounded-lg p-3 mt-2">
+                                  <pre className="text-sm whitespace-pre-wrap break-words">
+                                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : value as string}
+                                  </pre>
+                                </div>
+                              ) : outputType === 'label' ? (
+                                // Simple label display (for execution_cost, etc.)
+                                <div className="text-sm mt-2">
+                                  {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                                </div>
+                              ) : (
+                                // markdown (default)
+                                <div className="prose prose-invert max-w-none text-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 mt-2">
+                                  <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : value as string}
+                                  </ReactMarkdown>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
+                    {/* Display execution cost if available */}
+                    {executionCost !== null && (
+                      <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <DollarSign size={16} className="text-green-500" />
+                        <span className="text-sm">
+                          <span className="font-semibold">Execution Cost:</span> ${executionCost.toFixed(8)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full">

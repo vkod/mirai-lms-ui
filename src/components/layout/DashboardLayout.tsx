@@ -19,7 +19,7 @@ import { cn } from '../../lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Prospect Twins', href: '/personas', icon: Users },
+  { name: 'Prospect Digital Twins', href: '/personas', icon: Users },
   { name: 'Virtual Surveys', href: '/surveys', icon: ClipboardList },
 ];
 
