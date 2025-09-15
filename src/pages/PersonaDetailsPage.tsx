@@ -46,6 +46,7 @@ export default function PersonaDetailsPage() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (leadId) {
@@ -73,10 +74,17 @@ export default function PersonaDetailsPage() {
 
   const handleVirtualChat = () => {
     setShowChat(!showChat);
-    if (!showChat && chatHistory.length === 0) {
-      setChatHistory([
-        { role: 'assistant', message: `Hello! I'm ${persona?.full_name || 'your digital twin'}. I'm interested in learning more about your insurance products.` }
-      ]);
+    if (!showChat) {
+      // Opening chat
+      if (chatHistory.length === 0) {
+        setChatHistory([
+          { role: 'assistant', message: `Hello! I'm ${persona?.full_name || 'your digital twin'}. I'm interested in learning more about your insurance products.` }
+        ]);
+      }
+    } else {
+      // Closing chat - reset session for fresh conversation next time
+      setSessionId(null);
+      setChatHistory([]);
     }
   };
 
@@ -86,19 +94,34 @@ export default function PersonaDetailsPage() {
       setChatHistory(prev => [...prev, { role: 'user', message: userMessage }]);
       setChatMessage('');
       setIsSendingMessage(true);
-      
+
       try {
+        // Build URL with session_id if available
+        let url = getApiEndpoint(API_ENDPOINTS.CHAT_WITH_PERSONA(persona?.lead_id || ''));
+        if (sessionId) {
+          url += `?session_id=${sessionId}`;
+        }
+
         const response = await axios.post(
-          getApiEndpoint(API_ENDPOINTS.CHAT_WITH_PERSONA(persona?.lead_id || '')),
+          url,
           { question: userMessage },
           { headers: { 'Content-Type': 'application/json' } }
         );
-        
-        const assistantResponse = response.data || "I understand. Could you tell me more about that?";
+
+        // Extract session_id from response if present and not already set
+        if (response.data && typeof response.data === 'object' && response.data.session_id && !sessionId) {
+          setSessionId(response.data.session_id);
+        }
+
+        // Extract the actual message from response
+        const assistantResponse = typeof response.data === 'string'
+          ? response.data
+          : response.data.answer || response.data.message || response.data.response || "I understand. Could you tell me more about that?";
+
         setChatHistory(prev => [...prev, { role: 'assistant', message: assistantResponse }]);
       } catch (error) {
         console.error('Error sending message:', error);
-        
+
         // Fallback responses if API fails
         const fallbackResponses = [
           "That's interesting! Can you tell me more about the coverage?",
