@@ -49,7 +49,7 @@ Response:
   "completed_sessions_count": 40
 }
 ```
-
+ 
 ### 3. Get Session Details
 **GET** `/api/v1/qa/sessions/{session_id}`
 
