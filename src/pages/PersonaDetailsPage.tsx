@@ -10,6 +10,7 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import { getApiEndpoint, API_ENDPOINTS } from '../config/api.config';
+import RealtimeVoiceModal from '../components/RealtimeVoiceModal';
 
 interface Persona {
   lead_id: string;
@@ -44,6 +45,7 @@ export default function PersonaDetailsPage() {
   const [chatHistory, setChatHistory] = useState<Array<{role: string, message: string}>>([]);
   const [showImageModal, setShowImageModal] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
 
   useEffect(() => {
     if (leadId) {
@@ -114,7 +116,7 @@ export default function PersonaDetailsPage() {
   };
 
   const handleVirtualCall = () => {
-    alert('Virtual call feature coming soon! This will simulate a voice conversation with the persona.');
+    setShowVoiceCall(true);
   };
 
   if (loading) {
@@ -200,10 +202,13 @@ export default function PersonaDetailsPage() {
               </button>
               <button
                 onClick={handleVirtualCall}
-                className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2 relative"
               >
                 <Phone size={18} />
                 Virtual Call
+                <span className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs px-1.5 py-0.5 rounded font-semibold">
+                  BETA
+                </span>
               </button>
             </div>
           </div>
@@ -502,6 +507,13 @@ export default function PersonaDetailsPage() {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Realtime Voice Call Modal */}
+      <RealtimeVoiceModal
+        isOpen={showVoiceCall}
+        onClose={() => setShowVoiceCall(false)}
+        persona={persona}
+      />
     </div>
   );
 }

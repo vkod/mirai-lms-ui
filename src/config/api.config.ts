@@ -45,6 +45,9 @@ export const API_ENDPOINTS = {
   PERSONA_IMAGE: (leadId: string) => `/persona_image/${leadId}`,
   PERSONA_IMAGE_MEDIUM: (leadId: string) => `/persona_image_medium/${leadId}`,
   PERSONA_IMAGE_THUMBNAIL: (leadId: string) => `/persona_image_thumbnail/${leadId}`,
-  
+
+  // Realtime voice endpoints
+  REALTIME_SESSION: '/realtime/session',
+
   // Add other endpoints here as needed
 } as const;
