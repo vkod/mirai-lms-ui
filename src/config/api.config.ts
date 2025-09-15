@@ -49,5 +49,11 @@ export const API_ENDPOINTS = {
   // Realtime voice endpoints
   REALTIME_SESSION: '/realtime/session',
 
+  // Q&A Feature endpoints
+  QA_SESSIONS: '/api/v1/qa/sessions',
+  QA_SESSION_DETAIL: (sessionId: string) => `/api/v1/qa/sessions/${sessionId}`,
+  QA_SESSION_STREAM: (sessionId: string) => `/api/v1/qa/sessions/${sessionId}/stream`,
+  QA_SESSION_CANCEL: (sessionId: string) => `/api/v1/qa/sessions/${sessionId}/cancel`,
+
   // Add other endpoints here as needed
 } as const;

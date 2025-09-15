@@ -20,7 +20,8 @@ import { cn } from '../../lib/utils';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Prospect Digital Twins', href: '/personas', icon: Users },
-  { name: 'Virtual Surveys', href: '/surveys', icon: ClipboardList },
+  { name: 'Prospect Intelligence', href: '/surveys', icon: ClipboardList },
+  { name: 'AI Agent Dojo', href: '/agents', icon: Bot },
 ];
 
 export default function DashboardLayout() {
@@ -98,24 +99,6 @@ export default function DashboardLayout() {
               </motion.div>
             ))}
           </nav>
-
-          <div className="px-3 pb-2">
-            <NavLink
-              to="/agents"
-              className={({ isActive }) =>
-                cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                  "hover:bg-accent/10 hover:text-accent",
-                  isActive
-                    ? "bg-accent/20 text-accent shadow-lg shadow-accent/20"
-                    : "text-muted-foreground"
-                )
-              }
-            >
-              <Bot size={20} />
-              <span>AI Agent Dojo</span>
-            </NavLink>
-          </div>
 
           <div className="border-t border-border p-4">
             <button

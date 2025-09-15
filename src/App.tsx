@@ -13,7 +13,7 @@ import AgentsPage from './pages/AgentsPage';
 import AgentDetailsPage from './pages/AgentDetailsPage';
 import PersonasPage from './pages/PersonasPage';
 import PersonaDetailsPage from './pages/PersonaDetailsPage';
-import VirtualSurveysPage from './pages/VirtualSurveysPage';
+import SurveysAndQAPage from './pages/SurveysAndQAPage';
 import CreateSurveyPage from './pages/CreateSurveyPage';
 import SurveyResultsPage from './pages/SurveyResultsPage';
 
@@ -54,7 +54,7 @@ function App() {
             <Route path="agents/:agentName" element={<AgentDetailsPage />} />
             <Route path="personas" element={<PersonasPage />} />
             <Route path="personas/:leadId" element={<PersonaDetailsPage />} />
-            <Route path="surveys" element={<VirtualSurveysPage />} />
+            <Route path="surveys" element={<SurveysAndQAPage />} />
             <Route path="surveys/create" element={<CreateSurveyPage />} />
             <Route path="surveys/:surveyId/results" element={<SurveyResultsPage />} />
           </Route>
