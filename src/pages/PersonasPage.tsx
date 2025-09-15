@@ -215,10 +215,10 @@ export default function PersonasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-            Prospect Digital Twins
+            Lead Digital Twins
           </h1>
           <p className="text-muted-foreground mt-2">
-            Explore and interact with digital twins of your insurance prospects
+            Explore and interact with digital twins of your insurance leads
           </p>
         </div>
         <button

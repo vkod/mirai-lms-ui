@@ -19,8 +19,8 @@ import { cn } from '../../lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Prospect Digital Twins', href: '/personas', icon: Users },
-  { name: 'Prospect Intelligence', href: '/surveys', icon: ClipboardList },
+  { name: 'Lead Digital Twins', href: '/personas', icon: Users },
+  { name: 'Lead Q&A Sessions', href: '/surveys', icon: ClipboardList },
   { name: 'AI Agent Dojo', href: '/agents', icon: Bot },
 ];
 
