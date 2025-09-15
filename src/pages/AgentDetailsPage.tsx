@@ -37,6 +37,7 @@ interface AgentInput {
   name: string;
   input_desc: string;
   input_type: string;
+  sample_data?: string[];
 }
 
 interface AgentOutput {

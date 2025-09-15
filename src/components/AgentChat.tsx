@@ -10,6 +10,7 @@ interface AgentInput {
   name: string;
   input_desc: string;
   input_type: string;
+  sample_data?: string[];
 }
 
 interface AgentOutput {
@@ -186,26 +187,56 @@ export default function AgentChat({ agentName, agentInputs, agentOutputs, testEn
 
     if (input.input_type === 'textarea') {
       return (
-        <textarea
-          key={`textarea-${fieldKey}-${index}`}
-          value={value}
-          onChange={(e) => handleInputChange(fieldKey, e.target.value)}
-          placeholder={`Enter ${input.input_desc.toLowerCase()}`}
-          className="w-full px-3 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-          rows={4}
-        />
+        <div key={`textarea-container-${fieldKey}-${index}`} className="space-y-2">
+          <textarea
+            value={value}
+            onChange={(e) => handleInputChange(fieldKey, e.target.value)}
+            placeholder={`Enter ${input.input_desc.toLowerCase()}`}
+            className="w-full px-3 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={4}
+          />
+          {input.sample_data && input.sample_data.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {input.sample_data.map((sampleValue, sampleIndex) => (
+                <button
+                  key={`sample-${fieldKey}-${sampleIndex}`}
+                  onClick={() => handleInputChange(fieldKey, sampleValue)}
+                  className="px-3 py-1 text-sm bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-lg transition-colors"
+                  type="button"
+                >
+                  Sample data {sampleIndex + 1}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       );
     }
 
     return (
-      <input
-        key={`input-${fieldKey}-${index}`}
-        type="text"
-        value={value}
-        onChange={(e) => handleInputChange(fieldKey, e.target.value)}
-        placeholder={`Enter ${input.input_desc.toLowerCase()}`}
-        className="w-full px-3 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+      <div key={`input-container-${fieldKey}-${index}`} className="space-y-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => handleInputChange(fieldKey, e.target.value)}
+          placeholder={`Enter ${input.input_desc.toLowerCase()}`}
+          className="w-full px-3 py-2 bg-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {input.sample_data && input.sample_data.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {input.sample_data.map((sampleValue, sampleIndex) => (
+              <button
+                key={`sample-${fieldKey}-${sampleIndex}`}
+                onClick={() => handleInputChange(fieldKey, sampleValue)}
+                className="px-3 py-1 text-sm bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-lg transition-colors"
+                type="button"
+              >
+                Sample data {sampleIndex + 1}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -250,7 +281,7 @@ export default function AgentChat({ agentName, agentInputs, agentOutputs, testEn
               <h4 className="font-semibold text-lg mb-4">Input Parameters</h4>
               <div className="space-y-4">
                 {agentInputs.map((input, idx) => (
-                  <div key={`input-container-${input.name || idx}`} className="space-y-2">
+                  <div key={`input-wrapper-${input.name || idx}`} className="space-y-2">
                     <label className="text-sm font-medium text-muted-foreground">
                       {input.input_desc}
                     </label>
