@@ -137,7 +137,7 @@ export default function LoginPage() {
             transition={{ delay: 0.7 }}
             className="mt-6 text-center text-sm text-muted-foreground"
           >
-            Demo credentials: Use any email and password
+            <b>Note: Demo credentials: Use any email and password(eg: demo@example.com/password:demo)</b>
           </motion.div>
         </div>
       </motion.div>
