@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ArrowLeft, User, MapPin, DollarSign, 
+import {
+  ArrowLeft, User, MapPin, DollarSign,
   Shield, Heart, TrendingUp, MessageCircle, Phone, FileText,
-  ChevronDown, X, Flame, Snowflake, Sun
+  ChevronDown, X, Flame, Snowflake, Sun, Globe
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -47,6 +47,7 @@ export default function PersonaDetailsPage() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<'en-US' | 'ja'>('en-US');
 
   useEffect(() => {
     if (leadId) {
@@ -104,7 +105,10 @@ export default function PersonaDetailsPage() {
 
         const response = await axios.post(
           url,
-          { question: userMessage },
+          {
+            question: userMessage,
+            language: selectedLanguage
+          },
           { headers: { 'Content-Type': 'application/json' } }
         );
 
@@ -215,7 +219,7 @@ export default function PersonaDetailsPage() {
             <h2 className="text-xl font-semibold mb-1">{persona.full_name || 'Unknown'}</h2>
             <p className="text-sm text-muted-foreground mb-4">{persona.occupation || 'Unknown'}</p>
             
-            <div className="space-y-2 mb-4">
+            <div className="space-y-3 mb-4">
               <button
                 onClick={handleVirtualChat}
                 className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
@@ -223,6 +227,7 @@ export default function PersonaDetailsPage() {
                 <MessageCircle size={18} />
                 Virtual Chat
               </button>
+
               <button
                 onClick={handleVirtualCall}
                 className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2 relative"
@@ -233,6 +238,31 @@ export default function PersonaDetailsPage() {
                   BETA
                 </span>
               </button>
+
+              {/* Language Toggle */}
+              <div className="flex items-center justify-center gap-1 p-1 bg-muted rounded-lg">
+                <button
+                  onClick={() => setSelectedLanguage('en-US')}
+                  className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    selectedLanguage === 'en-US'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span className="text-base">🇺🇸 English</span>
+                  </button>
+                <button
+                  onClick={() => setSelectedLanguage('ja')}
+                  className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    selectedLanguage === 'ja'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span className="text-base">🇯🇵 日本語</span>
+                  
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -536,6 +566,7 @@ export default function PersonaDetailsPage() {
         isOpen={showVoiceCall}
         onClose={() => setShowVoiceCall(false)}
         persona={persona}
+        language={selectedLanguage}
       />
     </div>
   );

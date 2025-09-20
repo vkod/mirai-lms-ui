@@ -14,9 +14,10 @@ interface RealtimeVoiceModalProps {
     full_name?: string;
     profile_image_url?: string;
   };
+  language?: 'en-US' | 'ja';
 }
 
-export default function RealtimeVoiceModal({ isOpen, onClose, persona }: RealtimeVoiceModalProps) {
+export default function RealtimeVoiceModal({ isOpen, onClose, persona, language = 'en-US' }: RealtimeVoiceModalProps) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -64,6 +65,7 @@ export default function RealtimeVoiceModal({ isOpen, onClose, persona }: Realtim
         },
         body: JSON.stringify({
           persona_id: persona.lead_id,
+          language: language,
         }),
       });
 
