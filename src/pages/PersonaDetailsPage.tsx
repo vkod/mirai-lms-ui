@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, User, MapPin, DollarSign,
   Shield, Heart, TrendingUp, MessageCircle, Phone, FileText,
-  ChevronDown, X, Flame, Snowflake, Sun, Globe
+  ChevronDown, X, Flame, Snowflake, Sun
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';

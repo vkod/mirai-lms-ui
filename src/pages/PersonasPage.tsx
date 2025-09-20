@@ -376,9 +376,13 @@ export default function PersonasPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <img
-                      src={persona.profile_image_url || `https://ui-avatars.com/api/?name=${persona.full_name}&background=random`}
+                      src={getApiEndpoint(API_ENDPOINTS.PERSONA_IMAGE_THUMBNAIL(persona.lead_id))}
                       alt={persona.full_name}
-                      className="w-10 h-10 rounded-full"
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.full_name || persona.lead_id)}&background=random`;
+                      }}
                     />
                     <div>
                       <p className="font-medium">{persona.full_name || persona.lead_id}</p>
