@@ -443,7 +443,12 @@ This agent creates and maintains digital twins for personalization and targeting
         </div>
         <button
           onClick={() => setIsChatOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          disabled={!agent.endpoint_for_testing || agent.endpoint_for_testing.trim() === ''}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            !agent.endpoint_for_testing || agent.endpoint_for_testing.trim() === ''
+              ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-50'
+              : 'bg-blue-500 text-white hover:bg-blue-600'
+          }`}
         >
           <MessageCircle size={20} />
           <span>Test Agent</span>
